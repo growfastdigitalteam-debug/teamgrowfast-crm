@@ -21,6 +21,7 @@ import {
     FolderTree,
     UserCheck,
     HelpCircle,
+    Activity,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -44,16 +45,28 @@ const menuItems = [
         href: '/dashboard',
     },
     {
+        id: 'categorys',
+        label: 'Categorys', // Matches screenshot spelling
+        icon: FolderTree,
+        href: '/dashboard/categorys',
+    },
+    {
+        id: 'add-lead',
+        label: 'Add New Leads',
+        icon: UserPlus,
+        href: '/dashboard/add-lead',
+    },
+    {
         id: 'leads-center',
         label: 'Leads Center',
         icon: Users,
         href: '/dashboard/leads-center',
     },
     {
-        id: 'add-lead',
-        label: 'Add New Lead',
-        icon: UserPlus,
-        href: '/dashboard/add-lead',
+        id: 'new-leads',
+        label: 'New Leads', // From screenshot
+        icon: Activity,
+        href: '/dashboard/new-leads',
     },
     {
         id: 'leads-assign',
@@ -68,14 +81,14 @@ const menuItems = [
         href: '/dashboard/property-manager',
     },
     {
-        id: 'categories',
-        label: 'Categories',
-        icon: FolderTree,
-        href: '/dashboard/categories',
+        id: 'user-list',
+        label: 'User List', // Your Admin Panel
+        icon: Users,
+        href: '/dashboard/user-list',
     },
     {
         id: 'how-to-use',
-        label: 'How to Use',
+        label: 'How to use',
         icon: HelpCircle,
         href: '/dashboard/how-to-use',
     },
