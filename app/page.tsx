@@ -93,6 +93,7 @@ interface User {
   username: string
   role: UserRole
   displayName: string
+  companyId?: number
   company?: string
 }
 
@@ -105,8 +106,16 @@ interface Company {
   createdAt: string
 }
 
+interface Remark {
+  id: string
+  text: string
+  date: string
+  author: string
+}
+
 interface Lead {
   id: number
+  companyId: number
   fullName: string
   mobile: string
   whatsapp: string
@@ -116,36 +125,42 @@ interface Lead {
   category: string
   status: string
   remarks: string
+  remarksHistory: Remark[]
   assignedAgent: string
   createdAt: string
 }
 
 interface Category {
   id: number
+  companyId: number
   name: string
   color: string
 }
 
 interface Source {
   id: number
+  companyId: number
   name: string
   color: string
 }
 
 interface Team {
   id: number
+  companyId: number
   name: string
   color: string
 }
 
 interface ActivityType {
   id: number
+  companyId: number
   name: string
   color: string
 }
 
 interface CRMUser {
   id: number
+  companyId: number
   name: string
   email: string
   role: string
@@ -170,41 +185,86 @@ const initialCompanies: Company[] = [
 ]
 
 const initialCategories: Category[] = [
-  { id: 1, name: "Hot Lead", color: "#ef4444" },
-  { id: 2, name: "Warm Lead", color: "#f59e0b" },
-  { id: 3, name: "Cold Lead", color: "#3b82f6" },
-  { id: 4, name: "Converted", color: "#22c55e" },
+  { id: 1, companyId: 1, name: "Hot Lead", color: "#ef4444" },
+  { id: 2, companyId: 1, name: "Warm Lead", color: "#f59e0b" },
+  { id: 3, companyId: 1, name: "Cold Lead", color: "#3b82f6" },
+  { id: 4, companyId: 1, name: "Converted", color: "#22c55e" },
+  { id: 5, companyId: 2, name: "Investment", color: "#3b82f6" },
+  { id: 6, companyId: 2, name: "Residential", color: "#22c55e" },
 ]
 
 const initialSources: Source[] = [
-  { id: 1, name: "Facebook", color: "#1877f2" },
-  { id: 2, name: "Google Ads", color: "#ea4335" },
-  { id: 3, name: "WhatsApp", color: "#25d366" },
-  { id: 4, name: "Cold Calling", color: "#6366f1" },
-  { id: 5, name: "Walk-in", color: "#f59e0b" },
-  { id: 6, name: "Newspaper", color: "#64748b" },
+  { id: 1, companyId: 1, name: "Facebook", color: "#1877f2" },
+  { id: 2, companyId: 1, name: "Google Ads", color: "#ea4335" },
+  { id: 3, companyId: 1, name: "WhatsApp", color: "#25d366" },
+  { id: 4, companyId: 1, name: "Cold Calling", color: "#6366f1" },
+  { id: 5, companyId: 1, name: "Walk-in", color: "#f59e0b" },
+  { id: 6, companyId: 1, name: "Newspaper", color: "#64748b" },
+  { id: 7, companyId: 2, name: "Referral", color: "#f59e0b" },
+  { id: 8, companyId: 2, name: "Social Media", color: "#1877f2" },
 ]
 
 const initialTeams: Team[] = [
-  { id: 1, name: "Sales Team A", color: "#8b5cf6" },
-  { id: 2, name: "Sales Team B", color: "#06b6d4" },
-  { id: 3, name: "Support Team", color: "#f97316" },
+  { id: 1, companyId: 1, name: "Sales Team A", color: "#8b5cf6" },
+  { id: 2, companyId: 1, name: "Sales Team B", color: "#06b6d4" },
+  { id: 3, companyId: 1, name: "Support Team", color: "#f97316" },
+  { id: 4, companyId: 2, name: "Direct Sales", color: "#8b5cf6" },
 ]
 
 const initialActivityTypes: ActivityType[] = [
-  { id: 1, name: "Interested", color: "#22c55e" },
-  { id: 2, name: "Visited Client", color: "#fbbf24" },
-  { id: 3, name: "Junk Lead", color: "#ef4444" },
-  { id: 4, name: "Flat Sold", color: "#3b82f6" },
-  { id: 5, name: "Not Interested", color: "#991b1b" },
-  { id: 6, name: "Need to Followup", color: "#ec4899" },
+  { id: 1, companyId: 1, name: "Interested", color: "#22c55e" },
+  { id: 2, companyId: 1, name: "Visited Client", color: "#fbbf24" },
+  { id: 3, companyId: 1, name: "Junk Lead", color: "#ef4444" },
+  { id: 4, companyId: 1, name: "Flat Sold", color: "#3b82f6" },
+  { id: 5, companyId: 1, name: "Not Interested", color: "#991b1b" },
+  { id: 6, companyId: 1, name: "Need to Followup", color: "#ec4899" },
+  { id: 7, companyId: 2, name: "Interested", color: "#22c55e" },
+  { id: 8, companyId: 2, name: "Not Interested", color: "#ef4444" },
 ]
 
-const initialLeads: Lead[] = []
+const initialLeads: Lead[] = [
+  {
+    id: 1,
+    companyId: 1,
+    fullName: "Faisal Ahmed",
+    mobile: "9876543210",
+    whatsapp: "9876543210",
+    location: "Mumbai",
+    flatConfig: "2BHK",
+    source: "Facebook",
+    category: "Hot Lead",
+    status: "Interested",
+    remarks: "Very interested in luxury plots.",
+    remarksHistory: [
+      { id: "101", text: "Very interested in luxury plots.", date: "2024-01-20T10:00:00Z", author: "John Smith" }
+    ],
+    assignedAgent: "John Smith",
+    createdAt: "2024-01-20"
+  },
+  {
+    id: 2,
+    companyId: 2,
+    fullName: "Rahul Kumar",
+    mobile: "9988776655",
+    whatsapp: "9988776655",
+    location: "Delhi",
+    flatConfig: "3BHK",
+    source: "Referral",
+    category: "Investment",
+    status: "Interested",
+    remarks: "Wants to invest in commercial.",
+    remarksHistory: [
+      { id: "102", text: "Wants to invest in commercial.", date: "2024-02-01T11:00:00Z", author: "Direct Sales" }
+    ],
+    assignedAgent: "",
+    createdAt: "2024-02-01"
+  }
+]
 
 const initialUsers: CRMUser[] = [
-  { id: 1, name: "John Smith", email: "john@sukoon.com", role: "Sales Agent", status: "Active" },
-  { id: 2, name: "Sarah Johnson", email: "sarah@sukoon.com", role: "Team Lead", status: "Active" },
+  { id: 1, companyId: 1, name: "John Smith", email: "john@sukoon.com", role: "Sales Agent", status: "Active" },
+  { id: 2, companyId: 1, name: "Sarah Johnson", email: "sarah@sukoon.com", role: "Team Lead", status: "Active" },
+  { id: 3, companyId: 2, name: "Michael Test", email: "michael@test.com", role: "Manager", status: "Active" },
 ]
 
 
@@ -337,30 +397,31 @@ function LoginPage({ onLogin, companies }: { onLogin: (user: User) => void; comp
         setIsLoading(false)
         return
       }
-      
+
       // Hardcoded test user
       if (username === "test" && password === "test123") {
-        onLogin({ username: "test", role: "user", displayName: "Test User", company: "Sukoon Residency" })
+        onLogin({ username: "test", role: "user", displayName: "Test User", company: "Sukoon Residency", companyId: 1 })
         setIsLoading(false)
         return
       }
-      
+
       // Check dynamically created companies
       const matchedCompany = companies.find(
         (c) => c.adminEmail === username && c.password === password && c.status === "Active"
       )
-      
+
       if (matchedCompany) {
         onLogin({
           username: matchedCompany.adminEmail,
           role: "user",
           displayName: matchedCompany.name,
           company: matchedCompany.name,
+          companyId: matchedCompany.id,
         })
         setIsLoading(false)
         return
       }
-      
+
       setError("Invalid credentials")
       setIsLoading(false)
     }, 500)
@@ -389,7 +450,7 @@ function LoginPage({ onLogin, companies }: { onLogin: (user: User) => void; comp
                   className="h-11"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
@@ -825,14 +886,17 @@ function CRMUserDashboard({ user, onLogout }: { user: User; onLogout: () => void
   const [activePage, setActivePage] = useState<PageType>("dashboard")
   const [addLeadOpen, setAddLeadOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [leadStatusFilter, setLeadStatusFilter] = useState("")
 
-  const handleMenuClick = (id: string) => {
-    if (id === "add-lead") {
-      setAddLeadOpen(true)
-    } else {
-      setActivePage(id as PageType)
-      setMobileMenuOpen(false)
-    }
+  const handleMenuClick = (id: string | "dashboard") => {
+    setActivePage(id as PageType)
+    setMobileMenuOpen(false)
+    if (id !== "leads-center") setLeadStatusFilter("")
+  }
+
+  const handleStatusClick = (status: string) => {
+    setLeadStatusFilter(status)
+    setActivePage("leads-center")
   }
 
   return (
@@ -859,7 +923,7 @@ function CRMUserDashboard({ user, onLogout }: { user: User; onLogout: () => void
           {menuItems.map((item) => {
             const isActive = activePage === item.id
             const Icon = item.icon
-            
+
             if (item.id === "add-lead") {
               return (
                 <button
@@ -937,19 +1001,19 @@ function CRMUserDashboard({ user, onLogout }: { user: User; onLogout: () => void
         </header>
 
         <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
-          {activePage === "dashboard" && <DashboardView />}
-          {activePage === "categorys" && <CategorysView />}
+          {activePage === "dashboard" && <DashboardView companyId={user.companyId || 1} onStatusClick={handleStatusClick} />}
+          {activePage === "categorys" && <CategorysView companyId={user.companyId || 1} />}
           {activePage === "settings" && <SettingsView />}
-          {activePage === "leads-center" && <LeadsCenterView />}
-          {activePage === "leads-assign" && <LeadsAssignView />}
-          {activePage === "user-list" && <UserListView />}
+          {activePage === "leads-center" && <LeadsCenterView companyId={user.companyId || 1} userName={user.displayName} initialStatus={leadStatusFilter} />}
+          {activePage === "leads-assign" && <LeadsAssignView companyId={user.companyId || 1} />}
+          {activePage === "user-list" && <UserListView companyId={user.companyId || 1} />}
           {activePage === "property-manager" && <PlaceholderView title="Property Manager" />}
           {activePage === "how-to-use" && <HowToUseView />}
         </main>
       </div>
 
       {/* Add Lead Modal */}
-      <AddLeadModal open={addLeadOpen} onOpenChange={setAddLeadOpen} />
+      <AddLeadModal open={addLeadOpen} onOpenChange={setAddLeadOpen} companyId={user.companyId || 1} userName={user.displayName} />
     </div>
   )
 }
@@ -957,17 +1021,22 @@ function CRMUserDashboard({ user, onLogout }: { user: User; onLogout: () => void
 // ============================================
 // DASHBOARD VIEW (DYNAMIC COUNTS)
 // ============================================
-function DashboardView() {
+function DashboardView({ companyId, onStatusClick }: { companyId: number; onStatusClick?: (status: string) => void }) {
   const { leads, sources, activityTypes } = useData()
+
+  // Filter data by Company ID
+  const companyLeads = leads.filter(l => l.companyId === companyId)
+  const companySources = sources.filter(s => s.companyId === companyId)
+  const companyActivityTypes = activityTypes.filter(at => at.companyId === companyId)
 
   // Calculate counts for each activity type plus total leads
   const activityStats = [
-    ...activityTypes.map(at => ({
+    ...companyActivityTypes.map(at => ({
       title: at.name,
-      count: leads.filter(l => l.status === at.name).length,
+      count: companyLeads.filter(l => l.status === at.name).length,
       color: at.color,
     })),
-    { title: "Total Leads", count: leads.length, color: "#94a3b8" },
+    { title: "Total Leads", count: companyLeads.length, color: "#94a3b8" },
   ]
 
   // Helper to determine if text should be light or dark based on background
@@ -999,10 +1068,10 @@ function DashboardView() {
     "Newspaper": "bg-slate-600",
   }
 
-  const leadSources = sources.map(s => ({
+  const leadSources = companySources.map(s => ({
     name: s.name,
     icon: sourceIcons[s.name] || Globe,
-    count: leads.filter(l => l.source === s.name).length,
+    count: companyLeads.filter(l => l.source === s.name).length,
     color: sourceColors[s.name] || "bg-slate-500",
   }))
 
@@ -1012,8 +1081,9 @@ function DashboardView() {
         <h2 className="text-xl font-semibold text-foreground mb-4">Activity Types</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {activityStats.map((stat) => (
-            <div 
-              key={stat.title} 
+            <div
+              key={stat.title}
+              onClick={() => onStatusClick && onStatusClick(stat.title === "Total Leads" ? "" : stat.title)}
               className="rounded-xl p-5 transition-transform hover:scale-105 cursor-pointer"
               style={{ backgroundColor: stat.color }}
             >
@@ -1052,7 +1122,10 @@ function DashboardView() {
 // ============================================
 // ADD LEAD MODAL
 // ============================================
-function AddLeadModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+// ============================================
+// ADD LEAD MODAL
+// ============================================
+function AddLeadModal({ open, onOpenChange, companyId, userName }: { open: boolean; onOpenChange: (open: boolean) => void; companyId: number; userName: string }) {
   const { leads, setLeads, categories, sources, activityTypes } = useData()
   const [fullName, setFullName] = useState("")
   const [mobile, setMobile] = useState("")
@@ -1068,6 +1141,7 @@ function AddLeadModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
     if (fullName && mobile) {
       const newLead: Lead = {
         id: Math.max(...leads.map(l => l.id), 0) + 1,
+        companyId: companyId,
         fullName,
         mobile,
         whatsapp,
@@ -1076,7 +1150,13 @@ function AddLeadModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
         source,
         category,
         status: status || "Interested",
-        remarks,
+        remarks, // Latest remark
+        remarksHistory: remarks ? [{
+          id: Date.now().toString(),
+          text: remarks,
+          date: new Date().toISOString(),
+          author: userName
+        }] : [],
         assignedAgent: "",
         createdAt: new Date().toISOString().split("T")[0],
       }
@@ -1101,28 +1181,28 @@ function AddLeadModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
         <DialogHeader>
           <DialogTitle className="text-xl">Add New Lead</DialogTitle>
         </DialogHeader>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="fullName">Full Name *</Label>
             <Input id="fullName" placeholder="Enter full name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="mobile">Mobile Number *</Label>
             <Input id="mobile" placeholder="Enter mobile number" type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="whatsapp">WhatsApp Number</Label>
             <Input id="whatsapp" placeholder="Enter WhatsApp number" type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="location">Location</Label>
             <Input id="location" placeholder="Enter location" value={location} onChange={(e) => setLocation(e.target.value)} />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="flatConfig">Flat Configuration</Label>
             <Select value={flatConfig} onValueChange={setFlatConfig}>
@@ -1138,7 +1218,7 @@ function AddLeadModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="source">Leads Source</Label>
             <Select value={source} onValueChange={setSource}>
@@ -1152,7 +1232,7 @@ function AddLeadModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="category">Leads Category</Label>
             <Select value={category} onValueChange={setCategory}>
@@ -1180,13 +1260,13 @@ function AddLeadModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="remarks">Remarks</Label>
             <Textarea id="remarks" placeholder="Enter any additional remarks..." className="min-h-24" value={remarks} onChange={(e) => setRemarks(e.target.value)} />
           </div>
         </div>
-        
+
         <DialogFooter className="gap-2 sm:gap-0">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={handleSubmit} disabled={!fullName || !mobile}>Submit Form</Button>
@@ -1199,18 +1279,63 @@ function AddLeadModal({ open, onOpenChange }: { open: boolean; onOpenChange: (op
 // ============================================
 // LEADS CENTER VIEW
 // ============================================
-function LeadsCenterView() {
+function LeadsCenterView({
+  companyId,
+  userName,
+  initialStatus = ""
+}: {
+  companyId: number;
+  userName: string;
+  initialStatus?: string
+}) {
   const { leads, setLeads, categories, sources, activityTypes } = useData()
   const [editLead, setEditLead] = useState<Lead | null>(null)
+  const [newRemark, setNewRemark] = useState("")
+  const [statusFilter, setStatusFilter] = useState(initialStatus)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  // Filter data by company and internal filters
+  const companyLeads = leads.filter(l => {
+    const isCompany = l.companyId === companyId
+    const matchesStatus = statusFilter ? l.status === statusFilter : true
+    const matchesSearch = searchQuery
+      ? l.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      l.mobile.includes(searchQuery)
+      : true
+    return isCompany && matchesStatus && matchesSearch
+  })
+
+  const companyCategories = categories.filter(c => c.companyId === companyId)
+  const companySources = sources.filter(s => s.companyId === companyId)
+  const companyActivityTypes = activityTypes.filter(at => at.companyId === companyId)
 
   const handleDeleteLead = (id: number) => {
-    setLeads(leads.filter(l => l.id !== id))
+    const confirmation = window.prompt("SECURITY CHECK: Type 'delete' to confirm deletion.")
+    if (confirmation === "delete") {
+      setLeads(leads.filter(l => l.id !== id))
+    } else {
+      alert("Deletion cancelled. You must type 'delete' exactly.")
+    }
   }
 
   const handleEditSave = () => {
     if (editLead) {
-      setLeads(leads.map(l => l.id === editLead.id ? editLead : l))
+      let updatedLead = { ...editLead }
+
+      if (newRemark.trim()) {
+        const remarkObj: Remark = {
+          id: Date.now().toString(),
+          text: newRemark.trim(),
+          date: new Date().toISOString(),
+          author: userName
+        }
+        updatedLead.remarksHistory = [remarkObj, ...(updatedLead.remarksHistory || [])]
+        updatedLead.remarks = newRemark.trim() // Update current remark for list display
+      }
+
+      setLeads(leads.map(l => l.id === editLead.id ? updatedLead : l))
       setEditLead(null)
+      setNewRemark("")
     }
   }
 
@@ -1221,9 +1346,39 @@ function LeadsCenterView() {
         <p className="text-muted-foreground">Manage all your leads</p>
       </div>
 
+      <div className="flex flex-col sm:flex-row gap-4 items-end sm:items-center justify-between bg-card p-4 rounded-xl border border-border">
+        <div className="flex flex-1 flex-col sm:flex-row gap-4 w-full">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name or mobile..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="All Statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">All Statuses</SelectItem>
+              {companyActivityTypes.map((at) => (
+                <SelectItem key={at.id} value={at.name}>{at.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {(statusFilter || searchQuery) && (
+          <Button variant="ghost" size="sm" onClick={() => { setStatusFilter(""); setSearchQuery(""); }} className="text-muted-foreground">
+            Clear Filters
+          </Button>
+        )}
+      </div>
+
       <Card>
         <CardContent className="p-0">
-          {leads.length === 0 ? (
+          {companyLeads.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <UserX className="w-12 h-12 text-muted-foreground mb-4" />
               <p className="text-muted-foreground">No leads yet. Add your first lead!</p>
@@ -1242,7 +1397,7 @@ function LeadsCenterView() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {leads.map((lead) => (
+                {companyLeads.map((lead) => (
                   <TableRow key={lead.id}>
                     <TableCell className="font-medium">{lead.fullName}</TableCell>
                     <TableCell>{lead.mobile}</TableCell>
@@ -1272,7 +1427,7 @@ function LeadsCenterView() {
 
       {/* Edit Lead Modal */}
       <Dialog open={!!editLead} onOpenChange={(open) => !open && setEditLead(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Lead</DialogTitle>
           </DialogHeader>
@@ -1291,7 +1446,7 @@ function LeadsCenterView() {
                 <Select value={editLead.source} onValueChange={(v) => setEditLead({ ...editLead, source: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {sources.map((s) => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
+                    {companySources.map((s) => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -1300,7 +1455,7 @@ function LeadsCenterView() {
                 <Select value={editLead.category} onValueChange={(v) => setEditLead({ ...editLead, category: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {categories.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                    {companyCategories.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -1309,7 +1464,7 @@ function LeadsCenterView() {
                 <Select value={editLead.status} onValueChange={(v) => setEditLead({ ...editLead, status: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {activityTypes.map((at) => <SelectItem key={at.id} value={at.name}>{at.name}</SelectItem>)}
+                    {companyActivityTypes.map((at) => <SelectItem key={at.id} value={at.name}>{at.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -1317,10 +1472,32 @@ function LeadsCenterView() {
                 <Label>Location</Label>
                 <Input value={editLead.location} onChange={(e) => setEditLead({ ...editLead, location: e.target.value })} />
               </div>
+
               <div className="space-y-2 sm:col-span-2">
-                <Label>Remarks</Label>
-                <Textarea value={editLead.remarks} onChange={(e) => setEditLead({ ...editLead, remarks: e.target.value })} />
+                <Label>Add New Remark</Label>
+                <Textarea
+                  placeholder="Type new remark here..."
+                  value={newRemark}
+                  onChange={(e) => setNewRemark(e.target.value)}
+                />
               </div>
+
+              {editLead.remarksHistory && editLead.remarksHistory.length > 0 && (
+                <div className="space-y-3 sm:col-span-2 mt-4">
+                  <Label className="text-lg font-semibold">Remarks History</Label>
+                  <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                    {editLead.remarksHistory.map((remark) => (
+                      <div key={remark.id} className="p-3 bg-muted rounded-lg border border-border">
+                        <div className="flex justify-between items-start mb-1">
+                          <span className="font-bold text-sm text-primary">{remark.author}</span>
+                          <span className="text-xs text-muted-foreground">{new Date(remark.date).toLocaleString()}</span>
+                        </div>
+                        <p className="text-sm whitespace-pre-wrap">{remark.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
           <DialogFooter>
@@ -1336,14 +1513,19 @@ function LeadsCenterView() {
 // ============================================
 // LEADS ASSIGN VIEW
 // ============================================
-function LeadsAssignView() {
+// ============================================
+// LEADS ASSIGN VIEW
+// ============================================
+function LeadsAssignView({ companyId }: { companyId: number }) {
   const { leads, setLeads, users } = useData()
 
   const handleAssign = (leadId: number, agentName: string) => {
     setLeads(leads.map(l => l.id === leadId ? { ...l, assignedAgent: agentName } : l))
   }
 
-  const unassignedLeads = leads.filter(l => !l.assignedAgent)
+  const companyLeads = leads.filter(l => l.companyId === companyId)
+  const companyUsers = users.filter(u => u.companyId === companyId)
+  const unassignedLeads = companyLeads.filter(l => !l.assignedAgent)
 
   return (
     <div className="space-y-6">
@@ -1354,7 +1536,7 @@ function LeadsAssignView() {
 
       <Card>
         <CardContent className="p-0">
-          {leads.length === 0 ? (
+          {companyLeads.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <UserX className="w-12 h-12 text-muted-foreground mb-4" />
               <p className="text-muted-foreground">No leads to assign</p>
@@ -1371,7 +1553,7 @@ function LeadsAssignView() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {leads.map((lead) => (
+                {companyLeads.map((lead) => (
                   <TableRow key={lead.id}>
                     <TableCell className="font-medium">{lead.fullName}</TableCell>
                     <TableCell>{lead.mobile}</TableCell>
@@ -1383,7 +1565,7 @@ function LeadsAssignView() {
                           <SelectValue placeholder="Assign to..." />
                         </SelectTrigger>
                         <SelectContent>
-                          {users.filter(u => u.status === "Active").map((u) => (
+                          {companyUsers.filter(u => u.status === "Active").map((u) => (
                             <SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>
                           ))}
                         </SelectContent>
@@ -1407,7 +1589,7 @@ function LeadsAssignView() {
 // ============================================
 // USER LIST VIEW
 // ============================================
-function UserListView() {
+function UserListView({ companyId }: { companyId: number }) {
   const { users, setUsers } = useData()
   const [addUserOpen, setAddUserOpen] = useState(false)
   const [editUser, setEditUser] = useState<CRMUser | null>(null)
@@ -1415,10 +1597,13 @@ function UserListView() {
   const [newUserEmail, setNewUserEmail] = useState("")
   const [newUserRole, setNewUserRole] = useState("")
 
+  const companyUsers = users.filter(u => u.companyId === companyId)
+
   const handleAddUser = () => {
     if (newUserName && newUserEmail && newUserRole) {
       const newUser: CRMUser = {
         id: Math.max(...users.map(u => u.id), 0) + 1,
+        companyId: companyId,
         name: newUserName,
         email: newUserEmail,
         role: newUserRole,
@@ -1433,7 +1618,12 @@ function UserListView() {
   }
 
   const handleDeleteUser = (id: number) => {
-    setUsers(users.filter(u => u.id !== id))
+    const confirmation = window.prompt("SECURITY CHECK: Type 'delete' to confirm deletion.")
+    if (confirmation === "delete") {
+      setUsers(users.filter(u => u.id !== id))
+    } else {
+      alert("Deletion cancelled. You must type 'delete' exactly.")
+    }
   }
 
   const handleToggleStatus = (id: number) => {
@@ -1502,7 +1692,7 @@ function UserListView() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => (
+              {companyUsers.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
@@ -1669,13 +1859,13 @@ function SettingsView() {
 // ============================================
 // CATEGORYS VIEW (WITH STATE)
 // ============================================
-function CategorysView() {
+function CategorysView({ companyId }: { companyId: number }) {
   const { categories, setCategories, sources, setSources, teams, setTeams, activityTypes, setActivityTypes } = useData()
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-foreground">Settings</h1>
-      
+
       <Tabs defaultValue="activity-types" className="w-full">
         <TabsList className="bg-muted">
           <TabsTrigger value="activity-types">Activity Types</TabsTrigger>
@@ -1685,36 +1875,40 @@ function CategorysView() {
         </TabsList>
 
         <TabsContent value="activity-types" className="mt-4">
-          <CategoryTable 
-            data={activityTypes} 
-            setData={setActivityTypes} 
+          <CategoryTable
+            companyId={companyId}
+            data={activityTypes}
+            setData={setActivityTypes}
             title="Activity Type"
             description="These statuses control the Dashboard tiles. Adding, editing or deleting items here will update the Dashboard cards."
           />
         </TabsContent>
 
         <TabsContent value="source" className="mt-4">
-          <CategoryTable 
-            data={sources} 
-            setData={setSources} 
+          <CategoryTable
+            companyId={companyId}
+            data={sources}
+            setData={setSources}
             title="Lead Source"
             description="Lead sources appear in the Add Lead dropdown and Dashboard statistics."
           />
         </TabsContent>
 
         <TabsContent value="team" className="mt-4">
-          <CategoryTable 
-            data={teams} 
-            setData={setTeams} 
+          <CategoryTable
+            companyId={companyId}
+            data={teams}
+            setData={setTeams}
             title="Team"
             description="Teams are used for organizing agents and lead assignments."
           />
         </TabsContent>
 
         <TabsContent value="category" className="mt-4">
-          <CategoryTable 
-            data={categories} 
-            setData={setCategories} 
+          <CategoryTable
+            companyId={companyId}
+            data={categories}
+            setData={setCategories}
             title="Category"
             description="General lead segments for categorizing your leads."
           />
@@ -1725,25 +1919,30 @@ function CategorysView() {
 }
 
 function CategoryTable({
+  companyId,
   data,
   setData,
   title,
   description,
 }: {
-  data: Array<{ id: number; name: string; color: string }>
-  setData: React.Dispatch<React.SetStateAction<Array<{ id: number; name: string; color: string }>>>
+  companyId: number
+  data: Array<{ id: number; companyId: number; name: string; color: string }>
+  setData: React.Dispatch<React.SetStateAction<Array<{ id: number; companyId: number; name: string; color: string }>>>
   title: string
   description?: string
 }) {
   const [addOpen, setAddOpen] = useState(false)
   const [newItemName, setNewItemName] = useState("")
   const [newItemColor, setNewItemColor] = useState("#000000")
-  const [editItem, setEditItem] = useState<{ id: number; name: string; color: string } | null>(null)
+  const [editItem, setEditItem] = useState<{ id: number; companyId: number; name: string; color: string } | null>(null)
+
+  const companyData = data.filter(d => d.companyId === companyId)
 
   const handleAdd = () => {
     if (newItemName) {
       const newItem = {
         id: Math.max(...data.map(d => d.id), 0) + 1,
+        companyId: companyId,
         name: newItemName,
         color: newItemColor,
       }
@@ -1755,7 +1954,12 @@ function CategoryTable({
   }
 
   const handleDelete = (id: number) => {
-    setData(data.filter(d => d.id !== id))
+    const confirmation = window.prompt("SECURITY CHECK: Type 'delete' to confirm deletion.")
+    if (confirmation === "delete") {
+      setData(data.filter(d => d.id !== id))
+    } else {
+      alert("Deletion cancelled. You must type 'delete' exactly.")
+    }
   }
 
   const handleEditSave = () => {
@@ -1798,7 +2002,7 @@ function CategoryTable({
           </DialogContent>
         </Dialog>
       </div>
-      
+
       <Table>
         <TableHeader>
           <TableRow>
@@ -1809,7 +2013,7 @@ function CategoryTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data.map((item, index) => (
+          {companyData.map((item, index) => (
             <TableRow key={item.id}>
               <TableCell className="font-medium">{index + 1}</TableCell>
               <TableCell>{item.name}</TableCell>
@@ -1887,7 +2091,7 @@ function HowToUseView() {
   return (
     <div className="max-w-3xl">
       <h1 className="text-2xl font-bold text-foreground mb-6">How to Use CRM TeamGrowFast</h1>
-      
+
       <div className="space-y-4">
         {steps.map((step, index) => (
           <div key={step.title} className="bg-card rounded-xl border border-border p-5">
