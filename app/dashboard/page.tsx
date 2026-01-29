@@ -28,7 +28,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase/client'
 import { useUserProfile } from '@/lib/supabase/hooks'
 import Link from 'next/link'
 
