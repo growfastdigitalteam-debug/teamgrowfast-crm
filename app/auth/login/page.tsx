@@ -161,8 +161,8 @@ export default function LoginPage() {
                         <div className="p-4 bg-muted/50 rounded-lg">
                             <p className="text-xs text-muted-foreground mb-2 font-medium">Demo Credentials:</p>
                             <div className="text-xs text-muted-foreground space-y-1">
-                                <p>Email: <span className="font-mono">demo@teamgrowfast.com</span></p>
-                                <p>Password: <span className="font-mono">demo123456</span></p>
+                                <p>Email: <span className="font-mono">admin@admin.com</span></p>
+                                <p>Password: <span className="font-mono">admin123</span></p>
                             </div>
                         </div>
                     </CardFooter>
