@@ -16,7 +16,9 @@ import {
   Facebook,
   Globe,
   Phone,
+  History,
   MessageSquare,
+  MessageSquareQuote,
   Building,
   Newspaper,
   Instagram,
@@ -1541,6 +1543,7 @@ function LeadsCenterView({
 }) {
   const { leads, setLeads, categories, sources, activityTypes } = useData()
   const [editLead, setEditLead] = useState<Lead | null>(null)
+  const [followupLead, setFollowupLead] = useState<Lead | null>(null)
   const [newRemark, setNewRemark] = useState("")
   const [statusFilter, setStatusFilter] = useState(initialStatus)
   const [searchQuery, setSearchQuery] = useState("")
@@ -1591,6 +1594,32 @@ function LeadsCenterView({
 
       setLeads(leads.map(l => l.id === editLead.id ? updatedLead : l))
       setEditLead(null)
+      setNewRemark("")
+    }
+  }
+
+  const handleFollowupSave = () => {
+    if (followupLead) {
+      let updatedLead = { ...followupLead }
+
+      if (newRemark.trim()) {
+        const remarkObj: Remark = {
+          id: Date.now().toString(),
+          text: newRemark.trim(),
+          date: new Date().toISOString(),
+          author: userName
+        }
+        updatedLead.remarksHistory = [remarkObj, ...(updatedLead.remarksHistory || [])]
+        updatedLead.remarks = newRemark.trim()
+      }
+
+      // Enforce: Booked -> Converted
+      if (updatedLead.status === "Booked") {
+        updatedLead.category = "Converted"
+      }
+
+      setLeads(leads.map(l => l.id === followupLead.id ? updatedLead : l))
+      setFollowupLead(null)
       setNewRemark("")
     }
   }
@@ -1669,10 +1698,13 @@ function LeadsCenterView({
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => setEditLead(lead)}>
+                        <Button variant="ghost" size="sm" onClick={() => setFollowupLead(lead)} title="Followup History" className="text-primary hover:text-primary hover:bg-primary/10">
+                          <MessageSquareQuote className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setEditLead(lead)} title="Edit Lead">
                           <Pencil className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDeleteLead(lead.id)} className="text-destructive hover:text-destructive">
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteLead(lead.id)} title="Delete Lead" className="text-destructive hover:text-destructive">
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
@@ -1748,29 +1780,144 @@ function LeadsCenterView({
                   onChange={(e) => setNewRemark(e.target.value)}
                 />
               </div>
-
-              {editLead.remarksHistory && editLead.remarksHistory.length > 0 && (
-                <div className="space-y-3 sm:col-span-2 mt-4">
-                  <Label className="text-lg font-semibold">Remarks History</Label>
-                  <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                    {editLead.remarksHistory.map((remark) => (
-                      <div key={remark.id} className="p-3 bg-muted rounded-lg border border-border">
-                        <div className="flex justify-between items-start mb-1">
-                          <span className="font-bold text-sm text-primary">{remark.author}</span>
-                          <span className="text-xs text-muted-foreground">{new Date(remark.date).toLocaleString()}</span>
-                        </div>
-                        <p className="text-sm whitespace-pre-wrap">{remark.text}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditLead(null)}>Cancel</Button>
             <Button onClick={handleEditSave}>Save Changes</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Premium Followup & Remark History Box */}
+      <Dialog open={!!followupLead} onOpenChange={(open) => !open && setFollowupLead(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col p-0 border-none shadow-2xl">
+          {followupLead && (
+            <>
+              <DialogHeader className="p-6 bg-primary/5 border-b border-primary/10">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <History className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <DialogTitle className="text-xl font-bold">{followupLead.fullName}</DialogTitle>
+                      <p className="text-sm text-muted-foreground">Followup History & Timeline</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                    <Badge variant="outline" className="bg-background">{followupLead.status}</Badge>
+                    <span className="text-[10px] text-muted-foreground">{followupLead.mobile}</span>
+                  </div>
+                </div>
+              </DialogHeader>
+
+              <div className="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-5">
+                {/* Left Side: History Timeline */}
+                <div className="md:col-span-3 border-r border-border bg-muted/20 overflow-y-auto p-6 space-y-6">
+                  <h3 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground uppercase tracking-wider">
+                    <History className="w-4 h-4" />
+                    Timeline
+                  </h3>
+
+                  <div className="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-primary/20 before:via-border before:to-transparent">
+                    {followupLead.remarksHistory?.length ? (
+                      followupLead.remarksHistory.map((remark, idx) => (
+                        <div key={remark.id} className="relative flex items-start pl-12 group">
+                          <div className={cn(
+                            "absolute left-3 w-4 h-4 rounded-full border-2 border-background shadow-sm z-10 transition-transform group-hover:scale-125",
+                            idx === 0 ? "bg-primary" : "bg-muted-foreground"
+                          )} />
+                          <div className="flex-1 space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-primary">{remark.author}</span>
+                              <span className="text-[10px] text-muted-foreground">{new Date(remark.date).toLocaleString()}</span>
+                            </div>
+                            <div className="bg-background p-3 rounded-lg border border-border/60 shadow-sm group-hover:border-primary/30 transition-colors">
+                              <p className="text-sm whitespace-pre-wrap leading-relaxed">{remark.text}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-40 text-muted-foreground opacity-50">
+                        <MessageSquare className="w-10 h-10 mb-2" />
+                        <p className="text-sm">No history found</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right Side: Quick Actions */}
+                <div className="md:col-span-2 p-6 bg-background space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Quick Update</h3>
+
+                    <div className="space-y-2">
+                      <Label>Change Status</Label>
+                      <Select
+                        value={followupLead.status}
+                        onValueChange={(v) => {
+                          const updated = { ...followupLead, status: v };
+                          if (v === "Booked") updated.category = "Converted";
+                          setFollowupLead(updated);
+                        }}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {companyActivityTypes.map((at) => (
+                            <SelectItem key={at.id} value={at.name}>{at.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {followupLead.status === "Booked" && (
+                        <p className="text-[10px] text-emerald-600 italic font-medium">Will be marked as Converted</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Add Remark</Label>
+                      <Textarea
+                        placeholder="Add new followup remark..."
+                        className="min-h-[120px] resize-none"
+                        value={newRemark}
+                        onChange={(e) => setNewRemark(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-4 space-y-3">
+                    <Button
+                      className="w-full gap-2 shadow-lg shadow-primary/20"
+                      onClick={handleFollowupSave}
+                    >
+                      <Plus className="w-4 h-4" />
+                      Save Followup
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="w-full text-muted-foreground hover:text-foreground"
+                      onClick={() => setFollowupLead(null)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+
+                  <div className="mt-8 p-4 bg-muted/30 rounded-xl border border-border text-xs space-y-2">
+                    <p className="font-semibold text-muted-foreground uppercase tracking-widest text-[9px]">Lead Info Summary</p>
+                    <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+                      <span className="text-muted-foreground">Config:</span>
+                      <span className="font-medium">{followupLead.flatConfig || "N/A"}</span>
+                      <span className="text-muted-foreground">Location:</span>
+                      <span className="font-bold truncate" title={followupLead.location}>{followupLead.location || "N/A"}</span>
+                      <span className="text-muted-foreground">Source:</span>
+                      <span className="font-medium">{followupLead.source || "N/A"}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>
