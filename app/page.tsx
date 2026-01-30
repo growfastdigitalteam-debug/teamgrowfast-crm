@@ -19,6 +19,8 @@ import {
   MessageSquare,
   Building,
   Newspaper,
+  Instagram,
+  Mail,
   Menu,
   X,
   LogOut,
@@ -200,12 +202,15 @@ const initialCategories: Category[] = [
 const initialSources: Source[] = [
   { id: 1, companyId: 1, name: "Facebook", color: "#1877f2" },
   { id: 2, companyId: 1, name: "Google Ads", color: "#ea4335" },
-  { id: 3, companyId: 1, name: "WhatsApp", color: "#25d366" },
-  { id: 4, companyId: 1, name: "Cold Calling", color: "#6366f1" },
-  { id: 5, companyId: 1, name: "Walk-in", color: "#f59e0b" },
-  { id: 6, companyId: 1, name: "Newspaper", color: "#64748b" },
-  { id: 7, companyId: 2, name: "Referral", color: "#f59e0b" },
-  { id: 8, companyId: 2, name: "Social Media", color: "#1877f2" },
+  { id: 3, companyId: 1, name: "Instagram", color: "#e1306c" },
+  { id: 4, companyId: 1, name: "Website", color: "#334155" },
+  { id: 5, companyId: 1, name: "WhatsApp", color: "#25d366" },
+  { id: 6, companyId: 1, name: "Cold Calling", color: "#6366f1" },
+  { id: 7, companyId: 1, name: "Walk-in", color: "#f59e0b" },
+  { id: 8, companyId: 1, name: "Referral", color: "#8b5cf6" },
+  { id: 9, companyId: 1, name: "Newspaper", color: "#64748b" },
+  { id: 10, companyId: 2, name: "Referral", color: "#f59e0b" },
+  { id: 11, companyId: 2, name: "Social Media", color: "#1877f2" },
 ]
 
 const initialTeams: Team[] = [
@@ -217,13 +222,15 @@ const initialTeams: Team[] = [
 
 const initialActivityTypes: ActivityType[] = [
   { id: 1, companyId: 1, name: "Interested", color: "#22c55e" },
-  { id: 2, companyId: 1, name: "Visited Client", color: "#fbbf24" },
-  { id: 3, companyId: 1, name: "Junk Lead", color: "#ef4444" },
-  { id: 4, companyId: 1, name: "Flat Sold", color: "#3b82f6" },
-  { id: 5, companyId: 1, name: "Not Interested", color: "#991b1b" },
-  { id: 6, companyId: 1, name: "Need to Followup", color: "#ec4899" },
-  { id: 7, companyId: 2, name: "Interested", color: "#22c55e" },
-  { id: 8, companyId: 2, name: "Not Interested", color: "#ef4444" },
+  { id: 2, companyId: 1, name: "Site Visit Scheduled", color: "#fbbf24" },
+  { id: 3, companyId: 1, name: "Site Visit Completed", color: "#10b981" },
+  { id: 4, companyId: 1, name: "Booked", color: "#3b82f6" },
+  { id: 5, companyId: 1, name: "Junk Lead", color: "#ef4444" },
+  { id: 6, companyId: 1, name: "Not Interested", color: "#991b1b" },
+  { id: 7, companyId: 1, name: "Call Back", color: "#8b5cf6" },
+  { id: 8, companyId: 1, name: "Not Responding", color: "#64748b" },
+  { id: 9, companyId: 2, name: "Interested", color: "#22c55e" },
+  { id: 10, companyId: 2, name: "Not Interested", color: "#ef4444" },
 ]
 
 const initialLeads: Lead[] = [
@@ -664,21 +671,26 @@ function CompaniesView({
       const defaultSources: Source[] = [
         { id: timestamp + 5, companyId: newCompanyId, name: "Facebook", color: "#1877f2" },
         { id: timestamp + 6, companyId: newCompanyId, name: "Google Ads", color: "#ea4335" },
-        { id: timestamp + 7, companyId: newCompanyId, name: "WhatsApp", color: "#25d366" },
-        { id: timestamp + 8, companyId: newCompanyId, name: "Cold Calling", color: "#6366f1" },
-        { id: timestamp + 9, companyId: newCompanyId, name: "Walk-in", color: "#f59e0b" },
-        { id: timestamp + 10, companyId: newCompanyId, name: "Newspaper", color: "#64748b" },
+        { id: timestamp + 7, companyId: newCompanyId, name: "Instagram", color: "#e1306c" },
+        { id: timestamp + 8, companyId: newCompanyId, name: "Website", color: "#334155" },
+        { id: timestamp + 9, companyId: newCompanyId, name: "WhatsApp", color: "#25d366" },
+        { id: timestamp + 10, companyId: newCompanyId, name: "Cold Calling", color: "#6366f1" },
+        { id: timestamp + 11, companyId: newCompanyId, name: "Walk-in", color: "#f59e0b" },
+        { id: timestamp + 12, companyId: newCompanyId, name: "Referral", color: "#8b5cf6" },
+        { id: timestamp + 13, companyId: newCompanyId, name: "Newspaper", color: "#64748b" },
       ]
       setSources(prev => [...prev, ...defaultSources])
 
       // 4. Add default Activity Types (Lead Status)
       const defaultActivityTypes: ActivityType[] = [
-        { id: timestamp + 11, companyId: newCompanyId, name: "Interested", color: "#22c55e" },
-        { id: timestamp + 12, companyId: newCompanyId, name: "Visited Client", color: "#fbbf24" },
-        { id: timestamp + 13, companyId: newCompanyId, name: "Junk Lead", color: "#ef4444" },
-        { id: timestamp + 14, companyId: newCompanyId, name: "Flat Sold", color: "#3b82f6" },
-        { id: timestamp + 15, companyId: newCompanyId, name: "Not Interested", color: "#991b1b" },
-        { id: timestamp + 16, companyId: newCompanyId, name: "Need to Followup", color: "#ec4899" },
+        { id: timestamp + 14, companyId: newCompanyId, name: "Interested", color: "#22c55e" },
+        { id: timestamp + 15, companyId: newCompanyId, name: "Site Visit Scheduled", color: "#fbbf24" },
+        { id: timestamp + 16, companyId: newCompanyId, name: "Site Visit Completed", color: "#10b981" },
+        { id: timestamp + 17, companyId: newCompanyId, name: "Booked", color: "#3b82f6" },
+        { id: timestamp + 18, companyId: newCompanyId, name: "Junk Lead", color: "#ef4444" },
+        { id: timestamp + 19, companyId: newCompanyId, name: "Not Interested", color: "#991b1b" },
+        { id: timestamp + 20, companyId: newCompanyId, name: "Call Back", color: "#8b5cf6" },
+        { id: timestamp + 21, companyId: newCompanyId, name: "Not Responding", color: "#64748b" },
       ]
       setActivityTypes(prev => [...prev, ...defaultActivityTypes])
 
@@ -1107,18 +1119,24 @@ function DashboardView({ companyId, onStatusClick }: { companyId: number; onStat
   const sourceIcons: Record<string, React.ElementType> = {
     "Facebook": Facebook,
     "Google Ads": Globe,
+    "Instagram": Instagram,
+    "Website": Globe,
     "Cold Calling": Phone,
     "WhatsApp": MessageSquare,
     "Walk-in": Building,
+    "Referral": UserX,
     "Newspaper": Newspaper,
   }
 
   const sourceColors: Record<string, string> = {
     "Facebook": "bg-blue-600",
     "Google Ads": "bg-red-500",
-    "Cold Calling": "bg-green-600",
+    "Instagram": "bg-pink-600",
+    "Website": "bg-gray-700",
+    "Cold Calling": "bg-indigo-600",
     "WhatsApp": "bg-emerald-500",
     "Walk-in": "bg-amber-500",
+    "Referral": "bg-purple-600",
     "Newspaper": "bg-slate-600",
   }
 
