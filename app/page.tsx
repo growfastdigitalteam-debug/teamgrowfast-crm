@@ -311,6 +311,18 @@ function DataProvider({ children }: { children: ReactNode }) {
   const [activityTypes, setActivityTypes] = useState<ActivityType[]>(initialActivityTypes)
   const [users, setUsers] = useState<CRMUser[]>(initialUsers)
 
+  // Migration: Ensure all 'Booked' leads are in 'Converted' category
+  React.useEffect(() => {
+    const hasMismatchedLeads = leads.some(l => l.status === "Booked" && l.category !== "Converted")
+    if (hasMismatchedLeads) {
+      setLeads(prevLeads => prevLeads.map(l =>
+        l.status === "Booked" && l.category !== "Converted"
+          ? { ...l, category: "Converted" }
+          : l
+      ))
+    }
+  }, [leads])
+
   return (
     <DataContext.Provider value={{
       companies, setCompanies,
@@ -1244,7 +1256,7 @@ function AddLeadModal({ open, onOpenChange, companyId, userName }: { open: boole
         location,
         flatConfig,
         source,
-        category,
+        category: status === "Booked" ? "Converted" : category,
         status: status || "Interested",
         remarks, // Latest remark
         remarksHistory: remarks ? [{
@@ -1304,7 +1316,7 @@ function AddLeadModal({ open, onOpenChange, companyId, userName }: { open: boole
               location: leadData["Location"] || "",
               flatConfig: leadData["Flat Config"] || "",
               source: leadData["Source"] || "",
-              category: leadData["Category"] || "",
+              category: leadData["Status"] === "Booked" ? "Converted" : (leadData["Category"] || ""),
               status: leadData["Status"] || "Interested",
               remarks: leadData["Remarks"] || "",
               remarksHistory: leadData["Remarks"] ? [{
@@ -1416,7 +1428,11 @@ function AddLeadModal({ open, onOpenChange, companyId, userName }: { open: boole
 
               <div className="space-y-2">
                 <Label htmlFor="category">Leads Category</Label>
-                <Select value={category} onValueChange={setCategory}>
+                <Select
+                  value={status === "Booked" ? "Converted" : category}
+                  onValueChange={setCategory}
+                  disabled={status === "Booked"}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
@@ -1440,6 +1456,9 @@ function AddLeadModal({ open, onOpenChange, companyId, userName }: { open: boole
                     ))}
                   </SelectContent>
                 </Select>
+                {status === "Booked" && (
+                  <p className="text-[10px] text-emerald-600 font-medium mt-1">Note: Status "Booked" will automatically set category to "Converted".</p>
+                )}
               </div>
             </div>
 
@@ -1565,6 +1584,11 @@ function LeadsCenterView({
         updatedLead.remarks = newRemark.trim() // Update current remark for list display
       }
 
+      // Enforce: Booked -> Converted
+      if (updatedLead.status === "Booked") {
+        updatedLead.category = "Converted"
+      }
+
       setLeads(leads.map(l => l.id === editLead.id ? updatedLead : l))
       setEditLead(null)
       setNewRemark("")
@@ -1688,7 +1712,11 @@ function LeadsCenterView({
               </div>
               <div className="space-y-2">
                 <Label>Category</Label>
-                <Select value={editLead.category} onValueChange={(v) => setEditLead({ ...editLead, category: v })}>
+                <Select
+                  value={editLead.status === "Booked" ? "Converted" : editLead.category}
+                  onValueChange={(v) => setEditLead({ ...editLead, category: v })}
+                  disabled={editLead.status === "Booked"}
+                >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {companyCategories.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
@@ -1703,6 +1731,9 @@ function LeadsCenterView({
                     {companyActivityTypes.map((at) => <SelectItem key={at.id} value={at.name}>{at.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                {editLead.status === "Booked" && (
+                  <p className="text-[10px] text-emerald-600 font-medium mt-1 italic">Force-synced to "Converted" Category</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Location</Label>
