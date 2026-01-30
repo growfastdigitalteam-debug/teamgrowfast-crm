@@ -667,7 +667,12 @@ function CompaniesView({
   }
 
   const handleDeleteCompany = (id: number) => {
-    setCompanies(companies.filter((c) => c.id !== id))
+    const confirmation = window.prompt("SECURITY CHECK: Type 'delete' to confirm deletion of this company.")
+    if (confirmation === "delete") {
+      setCompanies(companies.filter((c) => c.id !== id))
+    } else {
+      alert("Deletion cancelled. You must type 'delete' exactly.")
+    }
   }
 
   const handleToggleStatus = (id: number) => {
@@ -1393,6 +1398,7 @@ function LeadsCenterView({
                   <TableHead>Category</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
+                  <TableHead>Recent Remark</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -1407,6 +1413,9 @@ function LeadsCenterView({
                       <Badge variant="outline">{lead.status}</Badge>
                     </TableCell>
                     <TableCell>{lead.createdAt}</TableCell>
+                    <TableCell className="max-w-[200px] truncate">
+                      {lead.remarks || "-"}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Button variant="ghost" size="sm" onClick={() => setEditLead(lead)}>
