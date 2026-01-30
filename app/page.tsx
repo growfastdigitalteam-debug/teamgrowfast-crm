@@ -41,6 +41,11 @@ import {
   Upload,
   Database,
   FileSpreadsheet,
+  TrendingUp,
+  Percent,
+  BarChart3,
+  Calendar,
+  Filter,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -1102,12 +1107,42 @@ function CRMUserDashboard({ user, onLogout }: { user: User; onLogout: () => void
 // DASHBOARD VIEW (DYNAMIC COUNTS)
 // ============================================
 function DashboardView({ companyId, onStatusClick }: { companyId: number; onStatusClick?: (status: string) => void }) {
-  const { leads, sources, activityTypes, categories } = useData()
+  const { leads, sources, activityTypes, categories, users } = useData()
+  const [dateFilter, setDateFilter] = useState("all")
+  const [sourceFilter, setSourceFilter] = useState("all")
+  const [categoryFilter, setCategoryFilter] = useState("all")
+  const [userFilter, setUserFilter] = useState("all")
 
-  // Filter data by Company ID
-  const companyLeads = leads.filter(l => l.companyId === companyId)
+  // Helper for Date filtering (createdAt is YYYY-MM-DD)
+  const isWithinDateRange = (createdAt: string, range: string) => {
+    if (range === "all") return true
+    const todayStr = new Date().toISOString().split("T")[0]
+    if (range === "today") return createdAt === todayStr
+
+    const date = new Date(createdAt)
+    const now = new Date()
+    const diffTime = Math.abs(now.getTime() - date.getTime())
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+    if (range === "7d") return diffDays <= 7
+    if (range === "30d") return diffDays <= 30
+    return true
+  }
+
+  // Filter leads based on selected criteria
+  const companyLeads = leads.filter(l => {
+    const isCompany = l.companyId === companyId
+    const isSourceMatch = sourceFilter === "all" || l.source === sourceFilter
+    const isCategoryMatch = categoryFilter === "all" || l.category === categoryFilter
+    const isUserMatch = userFilter === "all" || l.assignedAgent === userFilter
+    const isDateMatch = isWithinDateRange(l.createdAt, dateFilter)
+    return isCompany && isSourceMatch && isCategoryMatch && isUserMatch && isDateMatch
+  })
+
+  // Setup company-specific static resources for dropdowns
   const companySources = sources.filter(s => s.companyId === companyId)
   const companyActivityTypes = activityTypes.filter(at => at.companyId === companyId)
+  const companyUsers = users.filter(u => u.companyId === companyId)
 
   // Calculate counts for each activity type plus total leads
   const activityStats = [
@@ -1167,8 +1202,124 @@ function DashboardView({ companyId, onStatusClick }: { companyId: number; onStat
     color: c.color,
   }))
 
+  // Calculate Conversion Rate
+  const bookedCount = companyLeads.filter(l => l.status === "Booked").length
+  const totalLeads = companyLeads.length
+  const conversionValue = totalLeads > 0 ? (bookedCount / totalLeads) * 100 : 0
+  const conversionRate = conversionValue.toFixed(2)
+
+  // Color threshold for conversion rate
+  const getConversionColor = (val: number) => {
+    if (val === 0) return "text-muted-foreground"
+    if (val < 5) return "text-rose-500"
+    if (val < 15) return "text-amber-500"
+    return "text-emerald-500"
+  }
+
+  const getConversionBg = (val: number) => {
+    if (val === 0) return "bg-muted/10 border-border"
+    if (val < 5) return "bg-rose-50 border-rose-100 dark:bg-rose-950/20 dark:border-rose-900/30"
+    if (val < 15) return "bg-amber-50 border-amber-100 dark:bg-amber-950/20 dark:border-amber-900/30"
+    return "bg-emerald-50 border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-900/30"
+  }
+
   return (
     <div className="space-y-8">
+      {/* Dashboard Filters */}
+      <div className="flex flex-wrap items-center gap-3 bg-card p-4 rounded-xl border border-border shadow-sm">
+        <div className="flex items-center gap-2 text-muted-foreground mr-2">
+          <Filter className="w-4 h-4" />
+          <span className="text-xs font-bold uppercase tracking-wider opacity-70">Filters</span>
+        </div>
+
+        <Select value={dateFilter} onValueChange={setDateFilter}>
+          <SelectTrigger className="w-36 h-9 bg-background border-none shadow-inner text-xs">
+            <Calendar className="w-3.5 h-3.5 mr-2 opacity-50" />
+            <SelectValue placeholder="Date" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Time</SelectItem>
+            <SelectItem value="today">Today</SelectItem>
+            <SelectItem value="7d">Last 7 Days</SelectItem>
+            <SelectItem value="30d">Last 30 Days</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={sourceFilter} onValueChange={setSourceFilter}>
+          <SelectTrigger className="w-36 h-9 bg-background border-none shadow-inner text-xs">
+            <SelectValue placeholder="Source" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Sources</SelectItem>
+            {companySources.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger className="w-36 h-9 bg-background border-none shadow-inner text-xs">
+            <SelectValue placeholder="Category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            {categories.filter(c => c.companyId === companyId).map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        <Select value={userFilter} onValueChange={setUserFilter}>
+          <SelectTrigger className="w-36 h-9 bg-background border-none shadow-inner text-xs">
+            <SelectValue placeholder="Agent" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Agents</SelectItem>
+            {companyUsers.map(u => <SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        {(dateFilter !== "all" || sourceFilter !== "all" || categoryFilter !== "all" || userFilter !== "all") && (
+          <Button variant="ghost" size="sm" onClick={() => { setDateFilter("all"); setSourceFilter("all"); setCategoryFilter("all"); setUserFilter("all"); }} className="h-9 px-3 text-muted-foreground hover:text-foreground text-xs">
+            Reset
+          </Button>
+        )}
+      </div>
+
+      {/* Top Level Summary Widgets */}
+      <section>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className={cn("relative overflow-hidden border-2 transition-all hover:shadow-lg", getConversionBg(conversionValue))}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-2 rounded-lg bg-background/50 backdrop-blur-sm shadow-sm">
+                  <TrendingUp className={cn("w-6 h-6", getConversionColor(conversionValue))} />
+                </div>
+                <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground opacity-70">
+                  <Percent className="w-3 h-3" />
+                  Conversion
+                </div>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-widest" title="Formula: (Bookings ÷ Total Leads) × 100">Lead Conversion Rate</h3>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className={cn("text-4xl font-black tracking-tighter", getConversionColor(conversionValue))}>
+                    {conversionRate}%
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1.5 font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                  {bookedCount} Bookings out of {totalLeads} Leads
+                </p>
+              </div>
+
+              {/* Decorative background element */}
+              <div className="absolute -right-4 -bottom-4 opacity-[0.03] dark:opacity-[0.05]">
+                <BarChart3 className="w-32 h-32 rotate-12" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* You could add more KPI widgets here later */}
+        </div>
+      </section>
+
       <section>
         <h2 className="text-xl font-semibold text-foreground mb-4">Activity Types</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
