@@ -615,7 +615,7 @@ function CompaniesView({
   addCompanyOpen: boolean
   setAddCompanyOpen: (open: boolean) => void
 }) {
-  const { companies, setCompanies } = useData()
+  const { companies, setCompanies, setCategories, setSources, setActivityTypes, setTeams } = useData()
   const [newCompanyName, setNewCompanyName] = useState("")
   const [newCompanyEmail, setNewCompanyEmail] = useState("")
   const [newCompanyPassword, setNewCompanyPassword] = useState("")
@@ -635,15 +635,52 @@ function CompaniesView({
 
   const handleAddCompany = () => {
     if (newCompanyName && newCompanyEmail && newCompanyPassword) {
+      const newCompanyId = Math.max(...companies.map(c => c.id), 0) + 1
       const newCompany: Company = {
-        id: Math.max(...companies.map(c => c.id), 0) + 1,
+        id: newCompanyId,
         name: newCompanyName,
         adminEmail: newCompanyEmail,
         password: newCompanyPassword,
         status: "Active",
         createdAt: new Date().toISOString().split("T")[0],
       }
+
+      // 1. Add the company
       setCompanies([...companies, newCompany])
+
+      // 2. Add default Categories
+      const defaultCategories: Category[] = [
+        { id: Date.now() + 1, companyId: newCompanyId, name: "Hot Lead", color: "#ef4444" },
+        { id: Date.now() + 2, companyId: newCompanyId, name: "Warm Lead", color: "#f59e0b" },
+        { id: Date.now() + 3, companyId: newCompanyId, name: "Cold Lead", color: "#3b82f6" },
+        { id: Date.now() + 4, companyId: newCompanyId, name: "Converted", color: "#22c55e" },
+      ]
+      setCategories(prev => [...prev, ...defaultCategories])
+
+      // 3. Add default Sources
+      const defaultSources: Source[] = [
+        { id: Date.now() + 5, companyId: newCompanyId, name: "Facebook", color: "#1877f2" },
+        { id: Date.now() + 6, companyId: newCompanyId, name: "Google Ads", color: "#ea4335" },
+        { id: Date.now() + 7, companyId: newCompanyId, name: "WhatsApp", color: "#25d366" },
+        { id: Date.now() + 8, companyId: newCompanyId, name: "Cold Calling", color: "#6366f1" },
+        { id: Date.now() + 9, companyId: newCompanyId, name: "Walk-in", color: "#f59e0b" },
+      ]
+      setSources(prev => [...prev, ...defaultSources])
+
+      // 4. Add default Activity Types (Lead Status)
+      const defaultActivityTypes: ActivityType[] = [
+        { id: Date.now() + 10, companyId: newCompanyId, name: "Interested", color: "#22c55e" },
+        { id: Date.now() + 11, companyId: newCompanyId, name: "Visited Client", color: "#fbbf24" },
+        { id: Date.now() + 12, companyId: newCompanyId, name: "Junk Lead", color: "#ef4444" },
+        { id: Date.now() + 13, companyId: newCompanyId, name: "Flat Sold", color: "#3b82f6" },
+        { id: Date.now() + 14, companyId: newCompanyId, name: "Not Interested", color: "#991b1b" },
+        { id: Date.now() + 15, companyId: newCompanyId, name: "Need to Followup", color: "#ec4899" },
+      ]
+      setActivityTypes(prev => [...prev, ...defaultActivityTypes])
+
+      // 5. Add a default Team
+      setTeams(prev => [...prev, { id: Date.now() + 16, companyId: newCompanyId, name: "General Sales", color: "#8b5cf6" }])
+
       setNewCompanyName("")
       setNewCompanyEmail("")
       setNewCompanyPassword("")
