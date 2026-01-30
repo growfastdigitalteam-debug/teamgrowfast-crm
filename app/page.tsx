@@ -33,6 +33,9 @@ import {
   RefreshCw,
   KeyRound,
   UserX,
+  Download,
+  Upload,
+  Database,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -1008,7 +1011,7 @@ function CRMUserDashboard({ user, onLogout }: { user: User; onLogout: () => void
         <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
           {activePage === "dashboard" && <DashboardView companyId={user.companyId || 1} onStatusClick={handleStatusClick} />}
           {activePage === "categorys" && <CategorysView companyId={user.companyId || 1} />}
-          {activePage === "settings" && <SettingsView />}
+          {activePage === "settings" && <SettingsView companyId={user.companyId || 1} />}
           {activePage === "leads-center" && <LeadsCenterView companyId={user.companyId || 1} userName={user.displayName} initialStatus={leadStatusFilter} />}
           {activePage === "leads-assign" && <LeadsAssignView companyId={user.companyId || 1} />}
           {activePage === "user-list" && <UserListView companyId={user.companyId || 1} />}
@@ -1769,7 +1772,8 @@ function UserListView({ companyId }: { companyId: number }) {
 // ============================================
 // SETTINGS VIEW
 // ============================================
-function SettingsView() {
+function SettingsView({ companyId }: { companyId: number }) {
+  const { leads, setLeads, categories, setCategories, sources, setSources, teams, setTeams, activityTypes, setActivityTypes, users, setUsers } = useData()
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -1777,30 +1781,92 @@ function SettingsView() {
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  const [backupMessage, setBackupMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
 
   const handleUpdatePassword = (e: React.FormEvent) => {
+    // ... same as before
     e.preventDefault()
     setMessage(null)
-
     if (!currentPassword || !newPassword || !confirmPassword) {
       setMessage({ type: "error", text: "All fields are required" })
       return
     }
-
     if (newPassword !== confirmPassword) {
       setMessage({ type: "error", text: "New passwords do not match" })
       return
     }
-
     if (newPassword.length < 6) {
       setMessage({ type: "error", text: "Password must be at least 6 characters" })
       return
     }
-
     setMessage({ type: "success", text: "Password updated successfully!" })
     setCurrentPassword("")
     setNewPassword("")
     setConfirmPassword("")
+  }
+
+  const handleBackup = () => {
+    const backupData = {
+      companyId,
+      exportedAt: new Date().toISOString(),
+      leads: leads.filter(l => l.companyId === companyId),
+      categories: categories.filter(c => c.companyId === companyId),
+      sources: sources.filter(s => s.companyId === companyId),
+      teams: teams.filter(t => t.companyId === companyId),
+      activityTypes: activityTypes.filter(at => at.companyId === companyId),
+      users: users.filter(u => u.companyId === companyId),
+    }
+
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `crm-backup-company-${companyId}-${new Date().toISOString().split("T")[0]}.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    setBackupMessage({ type: "success", text: "Backup created and download started!" })
+  }
+
+  const handleRestore = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target?.result as string)
+
+        // Security Check: Ensure the data is for THIS company
+        if (data.companyId !== companyId) {
+          setBackupMessage({ type: "error", text: "Invalid Backup: This file belongs to another company." })
+          return
+        }
+
+        // Confirmation before overwrite
+        const confirm = window.prompt("WARNING: This will replace all your current data. Type 'restore' to confirm.")
+        if (confirm !== "restore") {
+          setBackupMessage({ type: "error", text: "Restore cancelled." })
+          return
+        }
+
+        // Update all datasets, keeping other companies' data intact
+        if (data.leads) setLeads(prev => [...prev.filter(l => l.companyId !== companyId), ...data.leads])
+        if (data.categories) setCategories(prev => [...prev.filter(c => c.companyId !== companyId), ...data.categories])
+        if (data.sources) setSources(prev => [...prev.filter(s => s.companyId !== companyId), ...data.sources])
+        if (data.teams) setTeams(prev => [...prev.filter(t => t.companyId !== companyId), ...data.teams])
+        if (data.activityTypes) setActivityTypes(prev => [...prev.filter(at => at.companyId !== companyId), ...data.activityTypes])
+        if (data.users) setUsers(prev => [...prev.filter(u => u.companyId !== companyId), ...data.users])
+
+        setBackupMessage({ type: "success", text: "Data restored successfully!" })
+      } catch (err) {
+        setBackupMessage({ type: "error", text: "Failed to parse backup file. Please use a valid JSON file." })
+      }
+    }
+    reader.readAsText(file)
+    // Reset input
+    e.target.value = ""
   }
 
   return (
@@ -1859,6 +1925,68 @@ function SettingsView() {
 
             <Button type="submit" className="w-full sm:w-auto">Update Password</Button>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+              <Database className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Data Backup & Restore</CardTitle>
+              <CardDescription>Securely manage your company data</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 rounded-xl border border-dashed border-border bg-muted/30 flex flex-col items-center text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Download className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h4 className="font-semibold">Backup Data</h4>
+                <p className="text-xs text-muted-foreground">Download all your leads, users, and settings as a JSON file.</p>
+              </div>
+              <Button onClick={handleBackup} variant="outline" className="w-full gap-2 hover:bg-primary/5">
+                <Download className="w-4 h-4" />
+                Generate Backup
+              </Button>
+            </div>
+
+            <div className="p-4 rounded-xl border border-dashed border-border bg-muted/30 flex flex-col items-center text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                <Upload className="w-6 h-6 text-emerald-600" />
+              </div>
+              <div>
+                <h4 className="font-semibold">Restore Data</h4>
+                <p className="text-xs text-muted-foreground">Import data from a previous backup file. This will replace current data.</p>
+              </div>
+              <div className="relative w-full">
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={handleRestore}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                />
+                <Button variant="outline" className="w-full gap-2 hover:bg-emerald-500/5 text-emerald-600 border-emerald-500/20">
+                  <Upload className="w-4 h-4" />
+                  Upload & Restore
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {backupMessage && (
+            <div className={cn("text-sm p-3 rounded-lg flex items-center gap-2",
+              backupMessage.type === "success" ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20" : "bg-destructive/10 text-destructive border border-destructive/20"
+            )}>
+              <Database className="w-4 h-4" />
+              {backupMessage.text}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
