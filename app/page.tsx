@@ -1075,7 +1075,7 @@ function CRMUserDashboard({ user, onLogout }: { user: User; onLogout: () => void
 // DASHBOARD VIEW (DYNAMIC COUNTS)
 // ============================================
 function DashboardView({ companyId, onStatusClick }: { companyId: number; onStatusClick?: (status: string) => void }) {
-  const { leads, sources, activityTypes } = useData()
+  const { leads, sources, activityTypes, categories } = useData()
 
   // Filter data by Company ID
   const companyLeads = leads.filter(l => l.companyId === companyId)
@@ -1128,6 +1128,12 @@ function DashboardView({ companyId, onStatusClick }: { companyId: number; onStat
     color: sourceColors[s.name] || "bg-slate-500",
   }))
 
+  const categoryStats = categories.filter(c => c.companyId === companyId).map(c => ({
+    title: c.name,
+    count: companyLeads.filter(l => l.category === c.name).length,
+    color: c.color,
+  }))
+
   return (
     <div className="space-y-8">
       <section>
@@ -1148,12 +1154,30 @@ function DashboardView({ companyId, onStatusClick }: { companyId: number; onStat
       </section>
 
       <section>
+        <h2 className="text-xl font-semibold text-foreground mb-4">Lead Categories</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {categoryStats.map((stat) => (
+            <div
+              key={stat.title}
+              className="bg-card rounded-xl p-5 border border-border hover:shadow-md transition-shadow cursor-default"
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: stat.color }} />
+                <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+              </div>
+              <p className="text-3xl font-bold text-foreground">{stat.count.toLocaleString()}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section>
         <h2 className="text-xl font-semibold text-foreground mb-4">Lead Sources</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {leadSources.map((source) => {
             const Icon = source.icon
             return (
-              <div key={source.name} className="bg-card rounded-xl p-5 border border-border hover:shadow-md transition-shadow cursor-pointer">
+              <div key={source.name} className="bg-card rounded-xl p-5 border border-border hover:shadow-md transition-shadow cursor-default">
                 <div className="flex items-center gap-4">
                   <div className={cn("w-12 h-12 rounded-lg flex items-center justify-center", source.color)}>
                     <Icon className="w-6 h-6 text-white" />
