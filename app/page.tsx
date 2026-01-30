@@ -193,7 +193,7 @@ interface Property {
 // INITIAL DATA
 // ============================================
 const initialCompanies: Company[] = [
-  { id: 1, name: "Sukoon Residency", adminEmail: "admin@sukoon.com", password: "sukoon123", status: "Active", createdAt: "2024-01-15" },
+  { id: 1, name: "GrowFastDigital", adminEmail: "admin@growfastdigital.com", password: "growfastdigital123", status: "Active", createdAt: "2024-01-15" },
   { id: 2, name: "Test Builders", adminEmail: "admin@testbuilders.com", password: "testbuilders123", status: "Active", createdAt: "2024-02-20" },
   { id: 3, name: "Horizon Developers", adminEmail: "admin@horizon.com", password: "horizon123", status: "Blocked", createdAt: "2024-03-10" },
 ]
@@ -283,8 +283,8 @@ const initialLeads: Lead[] = [
 ]
 
 const initialUsers: CRMUser[] = [
-  { id: 1, companyId: 1, name: "John Smith", email: "john@sukoon.com", role: "Sales Agent", status: "Active" },
-  { id: 2, companyId: 1, name: "Sarah Johnson", email: "sarah@sukoon.com", role: "Team Lead", status: "Active" },
+  { id: 1, companyId: 1, name: "John Smith", email: "john@growfastdigital.com", role: "Sales Agent", status: "Active" },
+  { id: 2, companyId: 1, name: "Sarah Johnson", email: "sarah@growfastdigital.com", role: "Team Lead", status: "Active" },
   { id: 3, companyId: 2, name: "Michael Test", email: "michael@test.com", role: "Manager", status: "Active" },
 ]
 
@@ -433,7 +433,7 @@ function LoginPage({ onLogin, companies }: { onLogin: (user: User) => void; comp
 
       // Hardcoded test user
       if (username === "test" && password === "test123") {
-        onLogin({ username: "test", role: "user", displayName: "Test User", company: "Sukoon Residency", companyId: 1 })
+        onLogin({ username: "test", role: "user", displayName: "Test User", company: "GrowFastDigital", companyId: 1 })
         setIsLoading(false)
         return
       }
