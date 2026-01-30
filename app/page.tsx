@@ -96,7 +96,6 @@ type PageType =
   | "categorys"
   | "leads-center"
   | "leads-assign"
-  | "property-manager"
   | "user-list"
   | "how-to-use"
   | "settings"
@@ -181,13 +180,6 @@ interface CRMUser {
   status: "Active" | "Blocked"
 }
 
-interface Property {
-  id: number
-  name: string
-  location: string
-  configurations: string
-  status: "Upcoming" | "Ongoing" | "Ready to Move" | "Sold Out"
-}
 
 // ============================================
 // INITIAL DATA
@@ -365,7 +357,6 @@ const menuItems = [
   { id: "add-lead" as const, label: "Add New Leads", icon: UserPlus },
   { id: "leads-center" as const, label: "Leads Center", icon: Users },
   { id: "leads-assign" as const, label: "Leads Assign", icon: UserCheck },
-  { id: "property-manager" as const, label: "Property Manager", icon: Building2 },
   { id: "user-list" as const, label: "User List", icon: UserCog },
   { id: "how-to-use" as const, label: "How to use", icon: HelpCircle },
 ]
@@ -1098,7 +1089,6 @@ function CRMUserDashboard({ user, onLogout }: { user: User; onLogout: () => void
           {activePage === "leads-center" && <LeadsCenterView companyId={user.companyId || 1} userName={user.displayName} initialStatus={leadStatusFilter} />}
           {activePage === "leads-assign" && <LeadsAssignView companyId={user.companyId || 1} />}
           {activePage === "user-list" && <UserListView companyId={user.companyId || 1} />}
-          {activePage === "property-manager" && <PlaceholderView title="Property Manager" />}
           {activePage === "how-to-use" && <HowToUseView />}
         </main>
       </div>
