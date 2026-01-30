@@ -36,6 +36,7 @@ import {
   Download,
   Upload,
   Database,
+  FileSpreadsheet,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -1252,102 +1253,239 @@ function AddLeadModal({ open, onOpenChange, companyId, userName }: { open: boole
     }
   }
 
+  const handleBulkUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string
+        const lines = text.split("\n")
+        const headers = lines[0].split(",").map(h => h.trim())
+
+        const newLeads: Lead[] = []
+        let lastId = Math.max(...leads.map(l => l.id), 0)
+
+        for (let i = 1; i < lines.length; i++) {
+          if (!lines[i].trim()) continue
+          const values = lines[i].split(",").map(v => v.trim())
+          const leadData: any = {}
+          headers.forEach((header, index) => {
+            leadData[header] = values[index]
+          })
+
+          if (leadData["Full Name"] && leadData["Mobile"]) {
+            lastId++
+            newLeads.push({
+              id: lastId,
+              companyId: companyId,
+              fullName: leadData["Full Name"],
+              mobile: leadData["Mobile"],
+              whatsapp: leadData["WhatsApp"] || "",
+              location: leadData["Location"] || "",
+              flatConfig: leadData["Flat Config"] || "",
+              source: leadData["Source"] || "",
+              category: leadData["Category"] || "",
+              status: leadData["Status"] || "Interested",
+              remarks: leadData["Remarks"] || "",
+              remarksHistory: leadData["Remarks"] ? [{
+                id: Date.now().toString() + i,
+                text: leadData["Remarks"],
+                date: new Date().toISOString(),
+                author: userName
+              }] : [],
+              assignedAgent: "",
+              createdAt: new Date().toISOString().split("T")[0],
+            })
+          }
+        }
+
+        if (newLeads.length > 0) {
+          setLeads([...leads, ...newLeads])
+          alert(`Successfully uploaded ${newLeads.length} leads!`)
+          onOpenChange(false)
+        } else {
+          alert("No valid leads found in the file. Please check the template.")
+        }
+      } catch (err) {
+        alert("Failed to parse the file. Please ensure it follows the CSV template.")
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ""
+  }
+
+  const downloadTemplate = () => {
+    const headers = ["Full Name", "Mobile", "WhatsApp", "Location", "Flat Config", "Source", "Category", "Status", "Remarks"]
+    const csvContent = headers.join(",") + "\n" +
+      "John Doe,9876543210,9876543210,Mumbai,2 BHK,Facebook,Hot Lead,Interested,Follow up tomorrow"
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.setAttribute("href", url)
+    link.setAttribute("download", "leads_template.csv")
+    link.style.visibility = "hidden"
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl">Add New Lead</DialogTitle>
+          <DialogTitle className="text-xl">Add Leads</DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name *</Label>
-            <Input id="fullName" placeholder="Enter full name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-          </div>
+        <Tabs defaultValue="single" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-muted">
+            <TabsTrigger value="single">Single Entry</TabsTrigger>
+            <TabsTrigger value="bulk">Bulk Upload (Excel/CSV)</TabsTrigger>
+          </TabsList>
 
-          <div className="space-y-2">
-            <Label htmlFor="mobile">Mobile Number *</Label>
-            <Input id="mobile" placeholder="Enter mobile number" type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} />
-          </div>
+          <TabsContent value="single" className="mt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name *</Label>
+                <Input id="fullName" placeholder="Enter full name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="whatsapp">WhatsApp Number</Label>
-            <Input id="whatsapp" placeholder="Enter WhatsApp number" type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="mobile">Mobile Number *</Label>
+                <Input id="mobile" placeholder="Enter mobile number" type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
-            <Input id="location" placeholder="Enter location" value={location} onChange={(e) => setLocation(e.target.value)} />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="whatsapp">WhatsApp Number</Label>
+                <Input id="whatsapp" placeholder="Enter WhatsApp number" type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="flatConfig">Flat Configuration</Label>
-            <Select value={flatConfig} onValueChange={setFlatConfig}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select configuration" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1 BHK">1 BHK</SelectItem>
-                <SelectItem value="2 BHK">2 BHK</SelectItem>
-                <SelectItem value="3 BHK">3 BHK</SelectItem>
-                <SelectItem value="4 BHK">4 BHK</SelectItem>
-                <SelectItem value="Penthouse">Penthouse</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="location">Location</Label>
+                <Input id="location" placeholder="Enter location" value={location} onChange={(e) => setLocation(e.target.value)} />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="source">Leads Source</Label>
-            <Select value={source} onValueChange={setSource}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select source" />
-              </SelectTrigger>
-              <SelectContent>
-                {sources.map((s) => (
-                  <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="flatConfig">Flat Configuration</Label>
+                <Select value={flatConfig} onValueChange={setFlatConfig}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select configuration" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1 BHK">1 BHK</SelectItem>
+                    <SelectItem value="2 BHK">2 BHK</SelectItem>
+                    <SelectItem value="3 BHK">3 BHK</SelectItem>
+                    <SelectItem value="4 BHK">4 BHK</SelectItem>
+                    <SelectItem value="Penthouse">Penthouse</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="category">Leads Category</Label>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((c) => (
-                  <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="source">Leads Source</Label>
+                <Select value={source} onValueChange={setSource}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select source" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sources.map((s) => (
+                      <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="status">Lead Status</Label>
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                {activityTypes.map((at) => (
-                  <SelectItem key={at.id} value={at.name}>{at.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="category">Leads Category</Label>
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((c) => (
+                      <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="remarks">Remarks</Label>
-            <Textarea id="remarks" placeholder="Enter any additional remarks..." className="min-h-24" value={remarks} onChange={(e) => setRemarks(e.target.value)} />
-          </div>
-        </div>
+              <div className="space-y-2">
+                <Label htmlFor="status">Lead Status</Label>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activityTypes.map((at) => (
+                      <SelectItem key={at.id} value={at.name}>{at.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={!fullName || !mobile}>Submit Form</Button>
-        </DialogFooter>
+            <div className="space-y-2 mt-4">
+              <Label htmlFor="remarks">Remarks</Label>
+              <Textarea id="remarks" placeholder="Enter any initial remarks" value={remarks} onChange={(e) => setRemarks(e.target.value)} />
+            </div>
+
+            <DialogFooter className="mt-6">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button onClick={handleSubmit} disabled={!fullName || !mobile}>Add Lead</Button>
+            </DialogFooter>
+          </TabsContent>
+
+          <TabsContent value="bulk" className="mt-4">
+            <div className="flex flex-col items-center justify-center space-y-6 py-8 border-2 border-dashed border-border rounded-xl bg-muted/30">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <FileSpreadsheet className="w-8 h-8 text-primary" />
+              </div>
+
+              <div className="text-center space-y-2">
+                <h4 className="font-semibold text-lg">Bulk Upload Leads</h4>
+                <p className="text-sm text-muted-foreground max-w-sm">
+                  Upload multiple leads at once using our template.
+                  Ensure the columns match the template exactly.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md px-6">
+                <Button variant="outline" className="flex-1 gap-2" onClick={downloadTemplate}>
+                  <Download className="w-4 h-4" />
+                  Download Template
+                </Button>
+
+                <div className="relative flex-1">
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={handleBulkUpload}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  />
+                  <Button className="w-full gap-2">
+                    <Upload className="w-4 h-4" />
+                    Upload File
+                  </Button>
+                </div>
+              </div>
+
+              <div className="text-xs text-muted-foreground bg-background p-3 rounded-lg border border-border">
+                <p className="font-semibold mb-1">Tips for a good experience:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Use the CSV template for best results</li>
+                  <li>Full Name and Mobile are mandatory</li>
+                  <li>Dates and Company ID are handled automatically</li>
+                </ul>
+              </div>
+            </div>
+
+            <DialogFooter className="mt-6">
+              <Button variant="outline" className="w-full" onClick={() => onOpenChange(false)}>Close</Button>
+            </DialogFooter>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   )
