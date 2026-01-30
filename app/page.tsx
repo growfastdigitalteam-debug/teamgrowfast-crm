@@ -141,6 +141,7 @@ interface Lead {
   remarksHistory: Remark[]
   assignedAgent: string
   createdAt: string
+  updatedAt: string // For sorting by recent activity
 }
 
 interface Category {
@@ -257,7 +258,8 @@ const initialLeads: Lead[] = [
       { id: "101", text: "Very interested in luxury plots.", date: "2024-01-20T10:00:00Z", author: "John Smith" }
     ],
     assignedAgent: "John Smith",
-    createdAt: "2024-01-20"
+    createdAt: "2024-01-20",
+    updatedAt: "2024-01-20T10:00:00Z"
   },
   {
     id: 2,
@@ -275,7 +277,8 @@ const initialLeads: Lead[] = [
       { id: "102", text: "Wants to invest in commercial.", date: "2024-02-01T11:00:00Z", author: "Direct Sales" }
     ],
     assignedAgent: "",
-    createdAt: "2024-02-01"
+    createdAt: "2024-02-01",
+    updatedAt: "2024-02-01T11:00:00Z"
   }
 ]
 
@@ -1037,6 +1040,9 @@ function CRMUserDashboard({ user, onLogout }: { user: User; onLogout: () => void
             )
           })}
         </nav>
+
+        {/* Persistent Conversion Widget in Sidebar */}
+        <SidebarConversionWidget companyId={user.companyId || 1} />
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
@@ -1282,43 +1288,7 @@ function DashboardView({ companyId, onStatusClick }: { companyId: number; onStat
         )}
       </div>
 
-      {/* Top Level Summary Widgets */}
-      <section>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className={cn("relative overflow-hidden border-2 transition-all hover:shadow-lg", getConversionBg(conversionValue))}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-2 rounded-lg bg-background/50 backdrop-blur-sm shadow-sm">
-                  <TrendingUp className={cn("w-6 h-6", getConversionColor(conversionValue))} />
-                </div>
-                <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground opacity-70">
-                  <Percent className="w-3 h-3" />
-                  Conversion
-                </div>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-widest" title="Formula: (Bookings ÷ Total Leads) × 100">Lead Conversion Rate</h3>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <span className={cn("text-4xl font-black tracking-tighter", getConversionColor(conversionValue))}>
-                    {conversionRate}%
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1.5 font-medium">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                  {bookedCount} Bookings out of {totalLeads} Leads
-                </p>
-              </div>
 
-              {/* Decorative background element */}
-              <div className="absolute -right-4 -bottom-4 opacity-[0.03] dark:opacity-[0.05]">
-                <BarChart3 className="w-32 h-32 rotate-12" />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* You could add more KPI widgets here later */}
-        </div>
-      </section>
 
       <section>
         <h2 className="text-xl font-semibold text-foreground mb-4">Activity Types</h2>
@@ -1380,6 +1350,66 @@ function DashboardView({ companyId, onStatusClick }: { companyId: number; onStat
   )
 }
 
+function SidebarConversionWidget({ companyId }: { companyId: number }) {
+  const { leads } = useData()
+  const companyLeads = leads.filter(l => l.companyId === companyId)
+
+  const bookedCount = companyLeads.filter(l => l.status === "Booked").length
+  const totalLeads = companyLeads.length
+  const conversionValue = totalLeads > 0 ? (bookedCount / totalLeads) * 100 : 0
+  const conversionRate = conversionValue.toFixed(2)
+
+  const getConversionColor = (val: number) => {
+    if (val === 0) return "text-muted-foreground"
+    if (val < 5) return "text-rose-500"
+    if (val < 15) return "text-amber-500"
+    return "text-emerald-500"
+  }
+
+  const getConversionBg = (val: number) => {
+    if (val === 0) return "bg-sidebar-accent/30"
+    if (val < 5) return "bg-rose-500/5 border-rose-500/10"
+    if (val < 15) return "bg-amber-500/5 border-amber-500/10"
+    return "bg-emerald-500/5 border-emerald-500/10"
+  }
+
+  return (
+    <div className="px-4 pb-6 mt-auto shrink-0">
+      <div className={cn("rounded-xl p-4 border border-sidebar-border transition-all hover:bg-sidebar-accent/50 group flex flex-col gap-2", getConversionBg(conversionValue))}>
+        <div className="flex items-center justify-between">
+          <div className="p-1.5 rounded-lg bg-sidebar-primary/10">
+            <TrendingUp className={cn("w-4 h-4", getConversionColor(conversionValue))} />
+          </div>
+          <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-wider bg-background/50 border-sidebar-border h-5 shadow-sm">
+            % Efficiency
+          </Badge>
+        </div>
+        <div>
+          <div className="flex items-baseline gap-1 mt-0.5">
+            <span className={cn("text-2xl font-black tracking-tight", getConversionColor(conversionValue))}>
+              {conversionRate}%
+            </span>
+          </div>
+          <div className="mt-2 space-y-1.5">
+            <div className="h-1.5 w-full bg-sidebar-accent rounded-full overflow-hidden shadow-inner">
+              <div
+                className={cn("h-full transition-all duration-1000",
+                  conversionValue < 5 ? "bg-rose-500" : conversionValue < 15 ? "bg-amber-500" : "bg-emerald-500"
+                )}
+                style={{ width: `${Math.min(conversionValue, 100)}%` }}
+              />
+            </div>
+            <div className="flex justify-between items-center text-[8px] text-sidebar-foreground/50 font-bold uppercase tracking-tighter opacity-80">
+              <span>{bookedCount} Booked</span>
+              <span>{totalLeads} Total</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ============================================
 // ADD LEAD MODAL
 // ============================================
@@ -1420,6 +1450,7 @@ function AddLeadModal({ open, onOpenChange, companyId, userName }: { open: boole
         }] : [],
         assignedAgent: "",
         createdAt: new Date().toISOString().split("T")[0],
+        updatedAt: new Date().toISOString(),
       }
       setLeads([...leads, newLead])
       // Reset form
@@ -1708,7 +1739,7 @@ function LeadsCenterView({
       l.mobile.includes(searchQuery)
       : true
     return isCompany && matchesStatus && matchesSearch
-  })
+  }).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
 
   const companyCategories = categories.filter(c => c.companyId === companyId)
   const companySources = sources.filter(s => s.companyId === companyId)
@@ -1743,6 +1774,7 @@ function LeadsCenterView({
         updatedLead.category = "Converted"
       }
 
+      updatedLead.updatedAt = new Date().toISOString()
       setLeads(leads.map(l => l.id === editLead.id ? updatedLead : l))
       setEditLead(null)
       setNewRemark("")
@@ -1769,6 +1801,7 @@ function LeadsCenterView({
         updatedLead.category = "Converted"
       }
 
+      updatedLead.updatedAt = new Date().toISOString()
       setLeads(leads.map(l => l.id === followupLead.id ? updatedLead : l))
       setFollowupLead(null)
       setNewRemark("")
@@ -2087,10 +2120,10 @@ function LeadsAssignView({ companyId }: { companyId: number }) {
   const { leads, setLeads, users } = useData()
 
   const handleAssign = (leadId: number, agentName: string) => {
-    setLeads(leads.map(l => l.id === leadId ? { ...l, assignedAgent: agentName } : l))
+    setLeads(leads.map(l => l.id === leadId ? { ...l, assignedAgent: agentName, updatedAt: new Date().toISOString() } : l))
   }
 
-  const companyLeads = leads.filter(l => l.companyId === companyId)
+  const companyLeads = leads.filter(l => l.companyId === companyId).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
   const companyUsers = users.filter(u => u.companyId === companyId)
   const unassignedLeads = companyLeads.filter(l => !l.assignedAgent)
 
