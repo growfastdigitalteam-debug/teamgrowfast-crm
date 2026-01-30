@@ -1378,7 +1378,6 @@ function AddLeadModal({ open, onOpenChange, companyId, userName }: { open: boole
                     <SelectItem value="2 BHK">2 BHK</SelectItem>
                     <SelectItem value="3 BHK">3 BHK</SelectItem>
                     <SelectItem value="4 BHK">4 BHK</SelectItem>
-                    <SelectItem value="Penthouse">Penthouse</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
