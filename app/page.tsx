@@ -648,38 +648,46 @@ function CompaniesView({
       // 1. Add the company
       setCompanies([...companies, newCompany])
 
+      const timestamp = Date.now()
+
       // 2. Add default Categories
       const defaultCategories: Category[] = [
-        { id: Date.now() + 1, companyId: newCompanyId, name: "Hot Lead", color: "#ef4444" },
-        { id: Date.now() + 2, companyId: newCompanyId, name: "Warm Lead", color: "#f59e0b" },
-        { id: Date.now() + 3, companyId: newCompanyId, name: "Cold Lead", color: "#3b82f6" },
-        { id: Date.now() + 4, companyId: newCompanyId, name: "Converted", color: "#22c55e" },
+        { id: timestamp + 1, companyId: newCompanyId, name: "Hot Lead", color: "#ef4444" },
+        { id: timestamp + 2, companyId: newCompanyId, name: "Warm Lead", color: "#f59e0b" },
+        { id: timestamp + 3, companyId: newCompanyId, name: "Cold Lead", color: "#3b82f6" },
+        { id: timestamp + 4, companyId: newCompanyId, name: "Converted", color: "#22c55e" },
       ]
       setCategories(prev => [...prev, ...defaultCategories])
 
       // 3. Add default Sources
       const defaultSources: Source[] = [
-        { id: Date.now() + 5, companyId: newCompanyId, name: "Facebook", color: "#1877f2" },
-        { id: Date.now() + 6, companyId: newCompanyId, name: "Google Ads", color: "#ea4335" },
-        { id: Date.now() + 7, companyId: newCompanyId, name: "WhatsApp", color: "#25d366" },
-        { id: Date.now() + 8, companyId: newCompanyId, name: "Cold Calling", color: "#6366f1" },
-        { id: Date.now() + 9, companyId: newCompanyId, name: "Walk-in", color: "#f59e0b" },
+        { id: timestamp + 5, companyId: newCompanyId, name: "Facebook", color: "#1877f2" },
+        { id: timestamp + 6, companyId: newCompanyId, name: "Google Ads", color: "#ea4335" },
+        { id: timestamp + 7, companyId: newCompanyId, name: "WhatsApp", color: "#25d366" },
+        { id: timestamp + 8, companyId: newCompanyId, name: "Cold Calling", color: "#6366f1" },
+        { id: timestamp + 9, companyId: newCompanyId, name: "Walk-in", color: "#f59e0b" },
+        { id: timestamp + 10, companyId: newCompanyId, name: "Newspaper", color: "#64748b" },
       ]
       setSources(prev => [...prev, ...defaultSources])
 
       // 4. Add default Activity Types (Lead Status)
       const defaultActivityTypes: ActivityType[] = [
-        { id: Date.now() + 10, companyId: newCompanyId, name: "Interested", color: "#22c55e" },
-        { id: Date.now() + 11, companyId: newCompanyId, name: "Visited Client", color: "#fbbf24" },
-        { id: Date.now() + 12, companyId: newCompanyId, name: "Junk Lead", color: "#ef4444" },
-        { id: Date.now() + 13, companyId: newCompanyId, name: "Flat Sold", color: "#3b82f6" },
-        { id: Date.now() + 14, companyId: newCompanyId, name: "Not Interested", color: "#991b1b" },
-        { id: Date.now() + 15, companyId: newCompanyId, name: "Need to Followup", color: "#ec4899" },
+        { id: timestamp + 11, companyId: newCompanyId, name: "Interested", color: "#22c55e" },
+        { id: timestamp + 12, companyId: newCompanyId, name: "Visited Client", color: "#fbbf24" },
+        { id: timestamp + 13, companyId: newCompanyId, name: "Junk Lead", color: "#ef4444" },
+        { id: timestamp + 14, companyId: newCompanyId, name: "Flat Sold", color: "#3b82f6" },
+        { id: timestamp + 15, companyId: newCompanyId, name: "Not Interested", color: "#991b1b" },
+        { id: timestamp + 16, companyId: newCompanyId, name: "Need to Followup", color: "#ec4899" },
       ]
       setActivityTypes(prev => [...prev, ...defaultActivityTypes])
 
-      // 5. Add a default Team
-      setTeams(prev => [...prev, { id: Date.now() + 16, companyId: newCompanyId, name: "General Sales", color: "#8b5cf6" }])
+      // 5. Add default Teams
+      const defaultTeams: Team[] = [
+        { id: timestamp + 17, companyId: newCompanyId, name: "Sales Team A", color: "#8b5cf6" },
+        { id: timestamp + 18, companyId: newCompanyId, name: "Sales Team B", color: "#06b6d4" },
+        { id: timestamp + 19, companyId: newCompanyId, name: "Support Team", color: "#f97316" },
+      ]
+      setTeams(prev => [...prev, ...defaultTeams])
 
       setNewCompanyName("")
       setNewCompanyEmail("")
