@@ -1366,7 +1366,7 @@ function AddLeadModal({ open, onOpenChange, companyId, userName }: { open: boole
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[95vh] w-[calc(100%-2rem)] md:w-full overflow-y-auto p-4 md:p-6">
         <DialogHeader>
           <DialogTitle className="text-xl">Add Leads</DialogTitle>
         </DialogHeader>
@@ -1669,57 +1669,59 @@ function LeadsCenterView({
               <p className="text-muted-foreground">No leads yet. Add your first lead!</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Mobile</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Recent Remark</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {companyLeads.map((lead) => (
-                  <TableRow key={lead.id}>
-                    <TableCell className="font-medium">{lead.fullName}</TableCell>
-                    <TableCell>{lead.mobile}</TableCell>
-                    <TableCell>{lead.source || "-"}</TableCell>
-                    <TableCell>{lead.category || "-"}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{lead.status}</Badge>
-                    </TableCell>
-                    <TableCell>{lead.createdAt}</TableCell>
-                    <TableCell className="max-w-[200px] truncate">
-                      {lead.remarks || "-"}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => setFollowupLead(lead)} title="Followup History" className="text-primary hover:text-primary hover:bg-primary/10">
-                          <MessageSquareQuote className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => setEditLead(lead)} title="Edit Lead">
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDeleteLead(lead.id)} title="Delete Lead" className="text-destructive hover:text-destructive">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Mobile</TableHead>
+                    <TableHead>Source</TableHead>
+                    <TableHead className="hidden md:table-cell">Category</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="hidden xl:table-cell">Created</TableHead>
+                    <TableHead className="hidden lg:table-cell">Recent Remark</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {companyLeads.map((lead) => (
+                    <TableRow key={lead.id}>
+                      <TableCell className="font-medium">{lead.fullName}</TableCell>
+                      <TableCell>{lead.mobile}</TableCell>
+                      <TableCell>{lead.source || "-"}</TableCell>
+                      <TableCell className="hidden md:table-cell">{lead.category || "-"}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{lead.status}</Badge>
+                      </TableCell>
+                      <TableCell className="hidden xl:table-cell">{lead.createdAt}</TableCell>
+                      <TableCell className="hidden lg:table-cell max-w-[200px] truncate">
+                        {lead.remarks || "-"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button variant="ghost" size="sm" onClick={() => setFollowupLead(lead)} title="Followup History" className="text-primary hover:text-primary hover:bg-primary/10">
+                            <MessageSquareQuote className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => setEditLead(lead)} title="Edit Lead">
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDeleteLead(lead.id)} title="Delete Lead" className="text-destructive hover:text-destructive">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
 
       {/* Edit Lead Modal */}
       <Dialog open={!!editLead} onOpenChange={(open) => !open && setEditLead(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[95vh] w-[calc(100%-2rem)] md:w-full overflow-y-auto p-4 md:p-6">
           <DialogHeader>
             <DialogTitle>Edit Lead</DialogTitle>
           </DialogHeader>
@@ -1791,30 +1793,30 @@ function LeadsCenterView({
 
       {/* Premium Followup & Remark History Box */}
       <Dialog open={!!followupLead} onOpenChange={(open) => !open && setFollowupLead(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col p-0 border-none shadow-2xl">
+        <DialogContent className="max-w-4xl max-h-[95vh] w-[calc(100%-2rem)] md:w-full overflow-y-auto md:overflow-hidden flex flex-col p-0 border-none shadow-2xl">
           {followupLead && (
             <>
-              <DialogHeader className="p-6 bg-primary/5 border-b border-primary/10">
-                <div className="flex items-center justify-between gap-4">
+              <DialogHeader className="p-4 md:p-6 bg-primary/5 border-b border-primary/10 shrink-0">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                      <History className="w-6 h-6 text-primary" />
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <History className="w-5 h-5 md:w-6 md:h-6 text-primary" />
                     </div>
                     <div>
-                      <DialogTitle className="text-xl font-bold">{followupLead.fullName}</DialogTitle>
-                      <p className="text-sm text-muted-foreground">Followup History & Timeline</p>
+                      <DialogTitle className="text-lg md:text-xl font-bold">{followupLead.fullName}</DialogTitle>
+                      <p className="text-xs md:text-sm text-muted-foreground">Followup History & Timeline</p>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                  <div className="flex items-center sm:flex-col sm:items-end gap-2 shrink-0">
                     <Badge variant="outline" className="bg-background">{followupLead.status}</Badge>
                     <span className="text-[10px] text-muted-foreground">{followupLead.mobile}</span>
                   </div>
                 </div>
               </DialogHeader>
 
-              <div className="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-5">
+              <div className="flex-1 overflow-y-auto md:overflow-hidden grid grid-cols-1 md:grid-cols-5">
                 {/* Left Side: History Timeline */}
-                <div className="md:col-span-3 border-r border-border bg-muted/20 overflow-y-auto p-6 space-y-6">
+                <div className="md:col-span-3 border-b md:border-b-0 md:border-r border-border bg-muted/20 overflow-y-auto p-4 md:p-6 space-y-6">
                   <h3 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground uppercase tracking-wider">
                     <History className="w-4 h-4" />
                     Timeline
@@ -1849,7 +1851,7 @@ function LeadsCenterView({
                 </div>
 
                 {/* Right Side: Quick Actions */}
-                <div className="md:col-span-2 p-6 bg-background space-y-6">
+                <div className="md:col-span-2 p-4 md:p-6 bg-background space-y-6">
                   <div className="space-y-4">
                     <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Quick Update</h3>
 
@@ -1956,39 +1958,41 @@ function LeadsAssignView({ companyId }: { companyId: number }) {
               <p className="text-muted-foreground">No leads to assign</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Lead Name</TableHead>
-                  <TableHead>Mobile</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Assigned To</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {companyLeads.map((lead) => (
-                  <TableRow key={lead.id}>
-                    <TableCell className="font-medium">{lead.fullName}</TableCell>
-                    <TableCell>{lead.mobile}</TableCell>
-                    <TableCell><Badge variant="outline">{lead.status}</Badge></TableCell>
-                    <TableCell>{lead.assignedAgent || <span className="text-muted-foreground">Unassigned</span>}</TableCell>
-                    <TableCell className="text-right">
-                      <Select value={lead.assignedAgent} onValueChange={(v) => handleAssign(lead.id, v)}>
-                        <SelectTrigger className="w-40">
-                          <SelectValue placeholder="Assign to..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {companyUsers.filter(u => u.status === "Active").map((u) => (
-                            <SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Lead Name</TableHead>
+                    <TableHead>Mobile</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Assigned To</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {companyLeads.map((lead) => (
+                    <TableRow key={lead.id}>
+                      <TableCell className="font-medium">{lead.fullName}</TableCell>
+                      <TableCell>{lead.mobile}</TableCell>
+                      <TableCell><Badge variant="outline">{lead.status}</Badge></TableCell>
+                      <TableCell>{lead.assignedAgent || <span className="text-muted-foreground">Unassigned</span>}</TableCell>
+                      <TableCell className="text-right">
+                        <Select value={lead.assignedAgent} onValueChange={(v) => handleAssign(lead.id, v)}>
+                          <SelectTrigger className="w-40">
+                            <SelectValue placeholder="Assign to..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {companyUsers.filter(u => u.status === "Active").map((u) => (
+                              <SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -2062,7 +2066,7 @@ function UserListView({ companyId }: { companyId: number }) {
           <DialogTrigger asChild>
             <Button className="gap-2"><Plus className="w-4 h-4" />Add User</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-md max-h-[95vh] w-[calc(100%-2rem)] md:w-full overflow-y-auto p-4 md:p-6">
             <DialogHeader><DialogTitle>Add New User</DialogTitle></DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
@@ -2095,48 +2099,50 @@ function UserListView({ companyId }: { companyId: number }) {
 
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {companyUsers.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.name}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.role}</TableCell>
-                  <TableCell>
-                    <Badge variant={user.status === "Active" ? "default" : "destructive"} className={cn(user.status === "Active" ? "bg-emerald-500/10 text-emerald-600" : "")}>
-                      {user.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => setEditUser(user)}><Pencil className="w-4 h-4" /></Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleToggleStatus(user.id)}>
-                        <LogIn className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(user.id)} className="text-destructive hover:text-destructive">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {companyUsers.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-medium">{user.name}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.role}</TableCell>
+                    <TableCell>
+                      <Badge variant={user.status === "Active" ? "default" : "destructive"} className={cn(user.status === "Active" ? "bg-emerald-500/10 text-emerald-600" : "")}>
+                        {user.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => setEditUser(user)}><Pencil className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleToggleStatus(user.id)}>
+                          <LogIn className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(user.id)} className="text-destructive hover:text-destructive">
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
       {/* Edit User Modal */}
       <Dialog open={!!editUser} onOpenChange={(open) => !open && setEditUser(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-md max-h-[95vh] w-[calc(100%-2rem)] md:w-full overflow-y-auto p-4 md:p-6">
           <DialogHeader><DialogTitle>Edit User</DialogTitle></DialogHeader>
           {editUser && (
             <div className="space-y-4 py-4">
@@ -2519,7 +2525,7 @@ function CategoryTable({
           <DialogTrigger asChild>
             <Button size="sm" className="gap-1"><Plus className="w-4 h-4" />Add</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-md max-h-[95vh] w-[calc(100%-2rem)] md:w-full overflow-y-auto p-4 md:p-6">
             <DialogHeader><DialogTitle>Add New {title}</DialogTitle></DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
@@ -2542,40 +2548,42 @@ function CategoryTable({
         </Dialog>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-16">SN</TableHead>
-            <TableHead>Name</TableHead>
-            <TableHead className="w-24">Color</TableHead>
-            <TableHead className="w-32 text-right">Action</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {companyData.map((item, index) => (
-            <TableRow key={item.id}>
-              <TableCell className="font-medium">{index + 1}</TableCell>
-              <TableCell>{item.name}</TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-full border border-border" style={{ backgroundColor: item.color }} />
-                  <span className="text-xs text-muted-foreground">{item.color}</span>
-                </div>
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-1">
-                  <Button variant="ghost" size="sm" onClick={() => setEditItem(item)}><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)} className="text-destructive hover:text-destructive"><Trash2 className="w-4 h-4" /></Button>
-                </div>
-              </TableCell>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-16">SN</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead className="w-24">Color</TableHead>
+              <TableHead className="w-32 text-right">Action</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {companyData.map((item, index) => (
+              <TableRow key={item.id}>
+                <TableCell className="font-medium">{index + 1}</TableCell>
+                <TableCell>{item.name}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full border border-border" style={{ backgroundColor: item.color }} />
+                    <span className="text-xs text-muted-foreground">{item.color}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex items-center justify-end gap-1">
+                    <Button variant="ghost" size="sm" onClick={() => setEditItem(item)}><Pencil className="w-4 h-4" /></Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)} className="text-destructive hover:text-destructive"><Trash2 className="w-4 h-4" /></Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
       {/* Edit Modal */}
       <Dialog open={!!editItem} onOpenChange={(open) => !open && setEditItem(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-md max-h-[95vh] w-[calc(100%-2rem)] md:w-full overflow-y-auto p-4 md:p-6">
           <DialogHeader><DialogTitle>Edit {title}</DialogTitle></DialogHeader>
           {editItem && (
             <div className="space-y-4 py-4">
