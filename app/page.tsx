@@ -233,46 +233,7 @@ const initialActivityTypes: ActivityType[] = [
   { id: 10, companyId: 2, name: "Not Interested", color: "#ef4444" },
 ]
 
-const initialLeads: Lead[] = [
-  {
-    id: 1,
-    companyId: 1,
-    fullName: "Faisal Ahmed",
-    mobile: "9876543210",
-    whatsapp: "9876543210",
-    location: "Mumbai",
-    flatConfig: "2BHK",
-    source: "Facebook",
-    category: "Hot Lead",
-    status: "Interested",
-    remarks: "Very interested in luxury plots.",
-    remarksHistory: [
-      { id: "101", text: "Very interested in luxury plots.", date: "2024-01-20T10:00:00Z", author: "John Smith" }
-    ],
-    assignedAgent: "John Smith",
-    createdAt: "2024-01-20",
-    updatedAt: "2024-01-20T10:00:00Z"
-  },
-  {
-    id: 2,
-    companyId: 2,
-    fullName: "Rahul Kumar",
-    mobile: "9988776655",
-    whatsapp: "9988776655",
-    location: "Delhi",
-    flatConfig: "3BHK",
-    source: "Referral",
-    category: "Investment",
-    status: "Interested",
-    remarks: "Wants to invest in commercial.",
-    remarksHistory: [
-      { id: "102", text: "Wants to invest in commercial.", date: "2024-02-01T11:00:00Z", author: "Direct Sales" }
-    ],
-    assignedAgent: "",
-    createdAt: "2024-02-01",
-    updatedAt: "2024-02-01T11:00:00Z"
-  }
-]
+const initialLeads: Lead[] = []
 
 const initialUsers: CRMUser[] = [
   { id: 1, companyId: 1, name: "John Smith", email: "john@growfastdigital.com", role: "Sales Agent", status: "Active" },
@@ -1590,7 +1551,7 @@ function AddLeadModal({ open, onOpenChange, companyId, userName }: { open: boole
                     <SelectValue placeholder="Select source" />
                   </SelectTrigger>
                   <SelectContent>
-                    {sources.map((s) => (
+                    {sources.filter(s => s.companyId === companyId).map((s) => (
                       <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -1608,7 +1569,7 @@ function AddLeadModal({ open, onOpenChange, companyId, userName }: { open: boole
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((c) => (
+                    {categories.filter(c => c.companyId === companyId).map((c) => (
                       <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -1622,7 +1583,7 @@ function AddLeadModal({ open, onOpenChange, companyId, userName }: { open: boole
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
-                    {activityTypes.map((at) => (
+                    {activityTypes.filter(at => at.companyId === companyId).map((at) => (
                       <SelectItem key={at.id} value={at.name}>{at.name}</SelectItem>
                     ))}
                   </SelectContent>
