@@ -450,10 +450,10 @@ function LoginPage({ onLogin, companies }: { onLogin: (user: User) => void; comp
       <div className="w-full max-w-md">
         <Card className="border-border shadow-lg">
           <CardHeader className="text-center pb-2">
-            <div className="w-16 h-16 bg-primary rounded-xl flex items-center justify-center mx-auto mb-4">
-              <Building2 className="w-8 h-8 text-primary-foreground" />
+            <div className="flex flex-col items-center mb-4">
+              <img src="/logo-icon.png" alt="Logo Icon" className="w-16 h-16 object-contain" />
+              <img src="/logo-text.png" alt="GrowFastDigital" className="h-8 mt-2 object-contain" />
             </div>
-            <CardTitle className="text-2xl font-bold">CRM TeamGrowFast</CardTitle>
             <CardDescription>Sign in to your account to continue</CardDescription>
           </CardHeader>
           <CardContent>
@@ -529,10 +529,8 @@ function SuperAdminDashboard({ user, onLogout }: { user: User; onLogout: () => v
       )}>
         <div className="h-16 flex items-center justify-between px-6 border-b border-sidebar-border">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-bold text-lg text-sidebar-foreground">Super Admin</span>
+            <img src="/logo-icon.png" alt="Logo Icon" className="w-8 h-8 object-contain" />
+            <img src="/logo-text.png" alt="GrowFastDigital" className="h-5 object-contain" />
           </div>
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobileMenuOpen(false)}>
             <X className="w-5 h-5" />
@@ -976,10 +974,8 @@ function CRMUserDashboard({ user, onLogout }: { user: User; onLogout: () => void
       )}>
         <div className="h-16 flex items-center justify-between px-6 border-b border-sidebar-border">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-bold text-lg text-sidebar-foreground">CRM TeamGrowFast</span>
+            <img src="/logo-icon.png" alt="Logo Icon" className="w-8 h-8 object-contain" />
+            <img src="/logo-text.png" alt="GrowFastDigital" className="h-5 object-contain" />
           </div>
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobileMenuOpen(false)}>
             <X className="w-5 h-5" />

@@ -1,4 +1,4 @@
-# 🏢 CRM TeamGrowFast Dashboard
+# 🏢 CRM GrowFastDigital Dashboard
 
 > A modern, full-stack multi-tenant CRM system built with Next.js 16, Supabase, and TypeScript.
 
@@ -332,7 +332,7 @@ Give a ⭐️ if this project helped you!
 
 ---
 
-**Built with ❤️ by the TeamGrowFast team**
+**Built with ❤️ by the GrowFastDigital team**
 
 ---
 
