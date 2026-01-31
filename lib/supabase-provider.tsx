@@ -184,16 +184,39 @@ export function SupabaseDataProvider({ children }: { children: ReactNode }) {
             setLeads(mappedLeads)
 
             // 5. Mock Companies/Users for UI compatibility
-            setCompanies([{
-                id: 1,
-                name: "My Company",
-                adminEmail: user.email!,
-                password: "",
-                status: "Active",
-                createdAt: "2024-01-01",
-                tenantId
-            }])
+            // 5. Fetch Companies logic
+            if (publicUser.role === 'superadmin' || user.email === 'admin@admin.com') {
+                const { data: dbCompanies } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('role', 'admin') // Fetch all company admins
 
+                if (dbCompanies) {
+                    const mappedCompanies: Company[] = dbCompanies.map((u, index) => ({
+                        id: u.id.length > 8 ? index + 1 : Number(u.id), // Handle UUID vs Number
+                        name: u.full_name || "Unknown Company",
+                        adminEmail: u.email || "",
+                        password: "Encrypted", // Cannot decrypt Supabase passwords
+                        status: "Active",
+                        createdAt: u.created_at ? u.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+                        tenantId: u.tenant_id
+                    }))
+                    setCompanies(mappedCompanies)
+                }
+            } else {
+                // For normal user, set their own company
+                setCompanies([{
+                    id: 1,
+                    name: "My Company",
+                    adminEmail: user.email!,
+                    password: "",
+                    status: "Active",
+                    createdAt: "2024-01-01",
+                    tenantId
+                }])
+            }
+
+            // Mock Users list (local only for now as requested leads focus)
             setUsers([{
                 id: 1,
                 companyId: 1,

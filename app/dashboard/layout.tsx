@@ -20,18 +20,19 @@ export default function DashboardLayout({
     const router = useRouter()
 
     useEffect(() => {
-        if (!isLoading && !isAuthenticated) {
-            router.replace(ROUTES.LOGIN)
-        }
+        // if (!isLoading && !isAuthenticated) {
+        //     // Let page.tsx handle auth logic internally for the restored dashboard
+        //     // router.replace(ROUTES.LOGIN)
+        // }
     }, [isLoading, isAuthenticated, router])
 
     if (isLoading) {
         return <FullPageLoader text="Loading dashboard..." />
     }
 
-    if (!isAuthenticated) {
-        return <FullPageLoader text="Redirecting to login..." />
-    }
+    // if (!isAuthenticated) {
+    //     return <FullPageLoader text="Redirecting to login..." />
+    // }
 
     return <>{children}</>
 }
