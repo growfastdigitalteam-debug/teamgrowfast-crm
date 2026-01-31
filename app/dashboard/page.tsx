@@ -100,7 +100,8 @@ import {
   type Team,
   type ActivityType,
   type CRMUser as UserDB,
-  useData
+  useData,
+  SupabaseDataProvider
 } from "@/lib/supabase-provider"
 
 type UserRole = "admin" | "user" | "superadmin" | null
