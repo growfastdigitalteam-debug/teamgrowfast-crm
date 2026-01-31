@@ -317,7 +317,7 @@ function CRMAppContent() {
           })
         } else if (session.user.email === "admin@admin.com") {
           // Fallback for Admin
-          setUser({ username: "admin", role: "admin", displayName: "Super Admin" })
+          setUser({ username: "admin", role: "superadmin", displayName: "Super Admin" })
         }
       }
       setIsLoading(false)
@@ -342,7 +342,7 @@ function CRMAppContent() {
     return <LoginPage onLogin={handleLogin} companies={companies} />
   }
 
-  if (user.role === "admin") {
+  if (user.role === "superadmin" || user.username === "admin@admin.com") {
     return <SuperAdminDashboard user={user} onLogout={handleLogout} />
   }
 
