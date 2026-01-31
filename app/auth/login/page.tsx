@@ -1,6 +1,6 @@
 /**
  * Login Page
- * Authentication page with email/password and OAuth options
+ * Secure authentication using AuthContext
  */
 
 'use client'
@@ -13,16 +13,18 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-
-import { supabase } from '@/lib/supabase/client'
-import { toast } from 'sonner'
+import { useAuthContext } from '@/lib/providers/auth-provider'
+import { useToast } from '@/lib/hooks/use-toast-notification'
+import { ROUTES } from '@/lib/constants'
 
 export default function LoginPage() {
     const router = useRouter()
+    const { login, isLoading } = useAuthContext()
+    const toast = useToast()
+
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
-    const [loading, setLoading] = useState(false)
 
     const handleEmailLogin = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -32,28 +34,15 @@ export default function LoginPage() {
             return
         }
 
-        setLoading(true)
+        const result = await login(email, password)
 
-        try {
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            })
-
-            if (error) throw error
-
-            toast.success('Login successful!')
-            router.push('/dashboard')
-            router.refresh()
-        } catch (error: any) {
-            console.error('Login error:', error)
-            toast.error(error.message || 'Invalid email or password')
-        } finally {
-            setLoading(false)
+        if (result.success) {
+            toast.success('Welcome back!')
+            router.push(ROUTES.DASHBOARD)
+        } else {
+            toast.error('Login failed', result.error || 'Invalid credentials')
         }
     }
-
-
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted flex items-center justify-center p-4">
@@ -88,7 +77,8 @@ export default function LoginPage() {
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         className="pl-10 h-11"
-                                        disabled={loading}
+                                        disabled={isLoading}
+                                        required
                                     />
                                 </div>
                             </div>
@@ -114,13 +104,15 @@ export default function LoginPage() {
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         className="pl-10 pr-10 h-11"
-                                        disabled={loading}
+                                        disabled={isLoading}
+                                        required
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
                                         className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                                        disabled={loading}
+                                        disabled={isLoading}
+                                        tabIndex={-1}
                                     >
                                         {showPassword ? (
                                             <EyeOff className="w-4 h-4" />
@@ -134,9 +126,9 @@ export default function LoginPage() {
                             <Button
                                 type="submit"
                                 className="w-full h-11 text-base font-medium"
-                                disabled={loading}
+                                disabled={isLoading}
                             >
-                                {loading ? (
+                                {isLoading ? (
                                     <>
                                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                                         Signing in...
@@ -146,24 +138,14 @@ export default function LoginPage() {
                                 )}
                             </Button>
                         </form>
-
-
                     </CardContent>
 
-                    <CardFooter className="flex flex-col space-y-4">
+                    <CardFooter className="flex flex-col space-y-2">
                         <div className="text-sm text-center text-muted-foreground">
                             Don't have an account?{' '}
                             <Link href="/auth/signup" className="text-primary hover:underline font-medium">
-                                Sign up
+                                Contact Admin
                             </Link>
-                        </div>
-
-                        <div className="p-4 bg-muted/50 rounded-lg">
-                            <p className="text-xs text-muted-foreground mb-2 font-medium">Demo Credentials:</p>
-                            <div className="text-xs text-muted-foreground space-y-1">
-                                <p>Email: <span className="font-mono">admin@admin.com</span></p>
-                                <p>Password: <span className="font-mono">admin123</span></p>
-                            </div>
                         </div>
                     </CardFooter>
                 </Card>
