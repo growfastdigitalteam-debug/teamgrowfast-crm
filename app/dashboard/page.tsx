@@ -1,6 +1,8 @@
 "use client"
 
-import React, { createContext, useContext, useState, type ReactNode } from "react"
+import React, { createContext, useContext, useState, type ReactNode, useEffect } from "react"
+import { createBrowserClient } from '@supabase/ssr'
+
 import {
   LayoutDashboard,
   FolderTree,
@@ -243,71 +245,15 @@ const initialUsers: CRMUser[] = [
 
 
 
+
 // ============================================
-// DATA CONTEXT
+// DATA CONTEXT REPLACEMENT
 // ============================================
-interface DataContextType {
-  companies: Company[]
-  setCompanies: React.Dispatch<React.SetStateAction<Company[]>>
-  leads: Lead[]
-  setLeads: React.Dispatch<React.SetStateAction<Lead[]>>
-  categories: Category[]
-  setCategories: React.Dispatch<React.SetStateAction<Category[]>>
-  sources: Source[]
-  setSources: React.Dispatch<React.SetStateAction<Source[]>>
-  teams: Team[]
-  setTeams: React.Dispatch<React.SetStateAction<Team[]>>
-  activityTypes: ActivityType[]
-  setActivityTypes: React.Dispatch<React.SetStateAction<ActivityType[]>>
-  users: CRMUser[]
-  setUsers: React.Dispatch<React.SetStateAction<CRMUser[]>>
-}
+import { SupabaseDataProvider, useData as useSupabaseData } from "@/lib/supabase-provider"
 
-const DataContext = createContext<DataContextType | undefined>(undefined)
+// We export this so sub-components can use it
+export const useData = useSupabaseData
 
-function DataProvider({ children }: { children: ReactNode }) {
-  const [companies, setCompanies] = useState<Company[]>(initialCompanies)
-  const [leads, setLeads] = useState<Lead[]>(initialLeads)
-  const [categories, setCategories] = useState<Category[]>(initialCategories)
-  const [sources, setSources] = useState<Source[]>(initialSources)
-  const [teams, setTeams] = useState<Team[]>(initialTeams)
-  const [activityTypes, setActivityTypes] = useState<ActivityType[]>(initialActivityTypes)
-  const [users, setUsers] = useState<CRMUser[]>(initialUsers)
-
-  // Migration: Ensure all 'Booked' leads are in 'Converted' category
-  React.useEffect(() => {
-    const hasMismatchedLeads = leads.some(l => l.status === "Booked" && l.category !== "Converted")
-    if (hasMismatchedLeads) {
-      setLeads(prevLeads => prevLeads.map(l =>
-        l.status === "Booked" && l.category !== "Converted"
-          ? { ...l, category: "Converted" }
-          : l
-      ))
-    }
-  }, [leads])
-
-  return (
-    <DataContext.Provider value={{
-      companies, setCompanies,
-      leads, setLeads,
-      categories, setCategories,
-      sources, setSources,
-      teams, setTeams,
-      activityTypes, setActivityTypes,
-      users, setUsers,
-    }}>
-      {children}
-    </DataContext.Provider>
-  )
-}
-
-function useData() {
-  const context = useContext(DataContext)
-  if (!context) {
-    throw new Error("useData must be used within a DataProvider")
-  }
-  return context
-}
 
 // ============================================
 // MENU ITEMS
@@ -331,22 +277,65 @@ const adminMenuItems = [
 // ============================================
 export default function CRMApp() {
   return (
-    <DataProvider>
+
+    <SupabaseDataProvider>
       <CRMAppContent />
-    </DataProvider>
+    </SupabaseDataProvider>
+
   )
 }
 
 function CRMAppContent() {
   const [user, setUser] = useState<User | null>(null)
   const { companies } = useData()
+  const [isLoading, setIsLoading] = useState(true)
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        // Determine role from metadata or query public users table
+        // For now, assume Admin or fetch profile
+        const { data: profile } = await supabase
+          .from('users')
+          .select('role, full_name, tenant_id')
+          .eq('id', session.user.id)
+          .single()
+
+        if (profile) {
+          setUser({
+            username: session.user.email!,
+            role: profile.role,
+            displayName: profile.full_name || "User",
+            company: "GrowFast", // TODO: fetch tenant name
+            companyId: 1
+          })
+        } else if (session.user.email === "admin@admin.com") {
+          // Fallback for Admin
+          setUser({ username: "admin", role: "admin", displayName: "Super Admin" })
+        }
+      }
+      setIsLoading(false)
+    }
+    checkSession()
+  }, [])
 
   const handleLogin = (loggedInUser: User) => {
     setUser(loggedInUser)
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
     setUser(null)
+  }
+
+  if (isLoading) {
+    return <div className="flex h-screen items-center justify-center">Loading...</div>
   }
 
   if (!user) {
@@ -370,40 +359,47 @@ function LoginPage({ onLogin, companies }: { onLogin: (user: User) => void; comp
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
     setIsLoading(true)
 
-    setTimeout(() => {
-      // Super Admin
-      if (username === "admin" && password === "admin123") {
-        onLogin({ username: "admin", role: "admin", displayName: "Super Admin" })
-        setIsLoading(false)
-        return
-      }
-
-
-      // Check dynamically created companies
-      const matchedCompany = companies.find(
-        (c) => c.adminEmail === username && c.password === password && c.status === "Active"
+    try {
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       )
 
-      if (matchedCompany) {
-        onLogin({
-          username: matchedCompany.adminEmail,
-          role: "user",
-          displayName: matchedCompany.name,
-          company: matchedCompany.name,
-          companyId: matchedCompany.id,
-        })
-        setIsLoading(false)
-        return
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: username,
+        password: password
+      })
+
+      if (error) {
+        throw error
       }
 
-      setError("Invalid credentials")
+      if (data.user) {
+        // Should fetch profile to get role
+        const { data: profile } = await supabase
+          .from('users')
+          .select('role, full_name')
+          .eq('id', data.user.id)
+          .single()
+
+        onLogin({
+          username: data.user.email!,
+          role: profile?.role || "user",
+          displayName: profile?.full_name || "User",
+          company: "GrowFast",
+          companyId: 1
+        })
+      }
+    } catch (err: any) {
+      setError(err.message || "Login failed")
+    } finally {
       setIsLoading(false)
-    }, 500)
+    }
   }
 
   return (
@@ -1365,7 +1361,7 @@ function SidebarConversionWidget({ companyId }: { companyId: number }) {
 // ADD LEAD MODAL
 // ============================================
 function AddLeadModal({ open, onOpenChange, companyId, userName }: { open: boolean; onOpenChange: (open: boolean) => void; companyId: number; userName: string }) {
-  const { leads, setLeads, categories, sources, activityTypes } = useData()
+  const { leads, categories, sources, activityTypes, addLead } = useData()
   const [fullName, setFullName] = useState("")
   const [mobile, setMobile] = useState("")
   const [whatsapp, setWhatsapp] = useState("")
@@ -1376,10 +1372,9 @@ function AddLeadModal({ open, onOpenChange, companyId, userName }: { open: boole
   const [status, setStatus] = useState("")
   const [remarks, setRemarks] = useState("")
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (fullName && mobile) {
-      const newLead: Lead = {
-        id: Math.max(...leads.map(l => l.id), 0) + 1,
+      const success = await addLead({
         companyId: companyId,
         fullName,
         mobile,
@@ -1397,23 +1392,24 @@ function AddLeadModal({ open, onOpenChange, companyId, userName }: { open: boole
           author: userName
         }] : [],
         assignedAgent: "",
-        createdAt: new Date().toISOString().split("T")[0],
-        updatedAt: new Date().toISOString(),
+      })
+
+      if (success) {
+        // Reset form
+        setFullName("")
+        setMobile("")
+        setWhatsapp("")
+        setLocation("")
+        setFlatConfig("")
+        setSource("")
+        setCategory("")
+        setStatus("")
+        setRemarks("")
+        onOpenChange(false)
       }
-      setLeads([...leads, newLead])
-      // Reset form
-      setFullName("")
-      setMobile("")
-      setWhatsapp("")
-      setLocation("")
-      setFlatConfig("")
-      setSource("")
-      setCategory("")
-      setStatus("")
-      setRemarks("")
-      onOpenChange(false)
     }
   }
+
 
   const handleBulkUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -1464,8 +1460,7 @@ function AddLeadModal({ open, onOpenChange, companyId, userName }: { open: boole
         }
 
         if (newLeads.length > 0) {
-          setLeads([...leads, ...newLeads])
-          alert(`Successfully uploaded ${newLeads.length} leads!`)
+          alert("Bulk upload is temporarily disabled while we upgrade the database security.")
           onOpenChange(false)
         } else {
           alert("No valid leads found in the file. Please check the template.")
@@ -1671,7 +1666,7 @@ function LeadsCenterView({
   userName: string;
   initialStatus?: string
 }) {
-  const { leads, setLeads, categories, sources, activityTypes } = useData()
+  const { leads, categories, sources, activityTypes, deleteLead, updateLead } = useData()
   const [editLead, setEditLead] = useState<Lead | null>(null)
   const [followupLead, setFollowupLead] = useState<Lead | null>(null)
   const [newRemark, setNewRemark] = useState("")
@@ -1693,18 +1688,18 @@ function LeadsCenterView({
   const companySources = sources.filter(s => s.companyId === companyId)
   const companyActivityTypes = activityTypes.filter(at => at.companyId === companyId)
 
-  const handleDeleteLead = (id: number) => {
+  const handleDeleteLead = async (id: number) => {
     const confirmation = window.prompt("SECURITY CHECK: Type 'delete' to confirm deletion.")
     if (confirmation === "delete") {
-      setLeads(leads.filter(l => l.id !== id))
+      await deleteLead(id)
     } else {
       alert("Deletion cancelled. You must type 'delete' exactly.")
     }
   }
 
-  const handleEditSave = () => {
+  const handleEditSave = async () => {
     if (editLead) {
-      let updatedLead = { ...editLead }
+      const updates: any = { ...editLead }
 
       if (newRemark.trim()) {
         const remarkObj: Remark = {
@@ -1713,25 +1708,26 @@ function LeadsCenterView({
           date: new Date().toISOString(),
           author: userName
         }
-        updatedLead.remarksHistory = [remarkObj, ...(updatedLead.remarksHistory || [])]
-        updatedLead.remarks = newRemark.trim() // Update current remark for list display
+        updates.remarksHistory = [remarkObj, ...(editLead.remarksHistory || [])]
+        updates.remarks = newRemark.trim() // Update current remark for list display
       }
 
       // Enforce: Booked -> Converted
-      if (updatedLead.status === "Booked") {
-        updatedLead.category = "Converted"
+      if (updates.status === "Booked") {
+        updates.category = "Converted"
       }
 
-      updatedLead.updatedAt = new Date().toISOString()
-      setLeads(leads.map(l => l.id === editLead.id ? updatedLead : l))
+      updates.updatedAt = new Date().toISOString()
+
+      await updateLead(editLead.id, updates)
       setEditLead(null)
       setNewRemark("")
     }
   }
 
-  const handleFollowupSave = () => {
+  const handleFollowupSave = async () => {
     if (followupLead) {
-      let updatedLead = { ...followupLead }
+      const updates: any = { ...followupLead }
 
       if (newRemark.trim()) {
         const remarkObj: Remark = {
@@ -1740,17 +1736,18 @@ function LeadsCenterView({
           date: new Date().toISOString(),
           author: userName
         }
-        updatedLead.remarksHistory = [remarkObj, ...(updatedLead.remarksHistory || [])]
-        updatedLead.remarks = newRemark.trim()
+        updates.remarksHistory = [remarkObj, ...(followupLead.remarksHistory || [])]
+        updates.remarks = newRemark.trim()
       }
 
       // Enforce: Booked -> Converted
-      if (updatedLead.status === "Booked") {
-        updatedLead.category = "Converted"
+      if (updates.status === "Booked") {
+        updates.category = "Converted"
       }
 
-      updatedLead.updatedAt = new Date().toISOString()
-      setLeads(leads.map(l => l.id === followupLead.id ? updatedLead : l))
+      updates.updatedAt = new Date().toISOString()
+
+      await updateLead(followupLead.id, updates)
       setFollowupLead(null)
       setNewRemark("")
     }
@@ -2065,10 +2062,10 @@ function LeadsCenterView({
 // LEADS ASSIGN VIEW
 // ============================================
 function LeadsAssignView({ companyId }: { companyId: number }) {
-  const { leads, setLeads, users } = useData()
+  const { leads, users, updateLead } = useData()
 
-  const handleAssign = (leadId: number, agentName: string) => {
-    setLeads(leads.map(l => l.id === leadId ? { ...l, assignedAgent: agentName, updatedAt: new Date().toISOString() } : l))
+  const handleAssign = async (leadId: number, agentName: string) => {
+    await updateLead(leadId, { assignedAgent: agentName, updatedAt: new Date().toISOString() })
   }
 
   const companyLeads = leads.filter(l => l.companyId === companyId).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
