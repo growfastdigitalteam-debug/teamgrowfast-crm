@@ -422,12 +422,6 @@ function LoginPage({ onLogin, companies }: { onLogin: (user: User) => void; comp
         return
       }
 
-      // Hardcoded test user
-      if (username === "test" && password === "test123") {
-        onLogin({ username: "test", role: "user", displayName: "Test User", company: "GrowFastDigital", companyId: 1 })
-        setIsLoading(false)
-        return
-      }
 
       // Check dynamically created companies
       const matchedCompany = companies.find(
@@ -507,13 +501,7 @@ function LoginPage({ onLogin, companies }: { onLogin: (user: User) => void; comp
               </Button>
             </form>
 
-            <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-              <p className="text-xs text-muted-foreground mb-2 font-medium">Demo Credentials:</p>
-              <div className="text-xs text-muted-foreground space-y-1">
-                <p>Admin: <span className="font-mono">admin / admin123</span></p>
-                <p>User: <span className="font-mono">test / test123</span></p>
-              </div>
-            </div>
+
           </CardContent>
         </Card>
       </div>
