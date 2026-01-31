@@ -451,7 +451,7 @@ function LoginPage({ onLogin, companies }: { onLogin: (user: User) => void; comp
         <Card className="border-border shadow-lg">
           <CardHeader className="text-center pb-2">
             <div className="flex flex-col items-center mb-8">
-              <img src="/logo-icon.png" alt="Logo Icon" className="w-28 h-28 object-contain drop-shadow-sm" />
+              <img src="/logo-icon.png" alt="Logo Icon" className="w-36 h-36 object-contain drop-shadow-sm" />
               <div className="text-4xl font-black tracking-tight mt-4 flex items-center gap-1">
                 <span className="text-foreground">GrowFast</span>
                 <span className="text-[#00AEEF]">Digital</span>
