@@ -451,11 +451,8 @@ function LoginPage({ onLogin, companies }: { onLogin: (user: User) => void; comp
         <Card className="border-border shadow-lg">
           <CardHeader className="text-center pb-2">
             <div className="flex flex-col items-center mb-8">
-              <div className="relative">
-                <div className="absolute inset-0 bg-[#00AEEF]/10 blur-xl rounded-full" />
-                <img src="/logo-icon.png" alt="Logo Icon" className="w-24 h-24 relative object-contain drop-shadow-md" />
-              </div>
-              <div className="text-4xl font-black tracking-tight mt-4 flex items-center gap-1">
+              <img src="/logo-icon.png" alt="Logo Icon" className="w-32 h-32 object-contain mix-blend-multiply" />
+              <div className="text-4xl font-black tracking-tight mt-6 flex items-center gap-1">
                 <span className="text-foreground">GrowFast</span>
                 <span className="text-[#00AEEF]">Digital</span>
               </div>
@@ -533,13 +530,13 @@ function SuperAdminDashboard({ user, onLogout }: { user: User; onLogout: () => v
         "fixed lg:static inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-sidebar-border flex flex-col transition-transform duration-300",
         mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
-        <div className="h-20 flex items-center px-6 gap-3 border-b border-sidebar-border bg-sidebar/50 backdrop-blur-sm">
-          <img src="/logo-icon.png" alt="Logo Icon" className="w-12 h-12 object-contain drop-shadow-sm" />
+        <div className="h-24 flex items-center px-6 gap-3 border-b border-sidebar-border bg-sidebar/50 backdrop-blur-sm">
+          <img src="/logo-icon.png" alt="Logo Icon" className="w-14 h-14 object-contain mix-blend-multiply" />
           <div className="flex flex-col">
             <div className="text-lg font-black tracking-tighter leading-none">
               <span className="text-sidebar-foreground">GrowFast</span>
             </div>
-            <div className="text-lg font-black tracking-tighter leading-none mt-0.5">
+            <div className="text-lg font-black tracking-tighter leading-none mt-1">
               <span className="text-[#00AEEF]">Digital</span>
             </div>
           </div>
@@ -983,13 +980,13 @@ function CRMUserDashboard({ user, onLogout }: { user: User; onLogout: () => void
         "fixed lg:static inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-sidebar-border flex flex-col transition-transform duration-300",
         mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
-        <div className="h-20 flex items-center px-6 gap-3 border-b border-sidebar-border bg-sidebar/50 backdrop-blur-sm">
-          <img src="/logo-icon.png" alt="Logo Icon" className="w-12 h-12 object-contain drop-shadow-sm" />
+        <div className="h-24 flex items-center px-6 gap-3 border-b border-sidebar-border bg-sidebar/50 backdrop-blur-sm">
+          <img src="/logo-icon.png" alt="Logo Icon" className="w-14 h-14 object-contain mix-blend-multiply" />
           <div className="flex flex-col">
             <div className="text-lg font-black tracking-tighter leading-none">
               <span className="text-sidebar-foreground">GrowFast</span>
             </div>
-            <div className="text-lg font-black tracking-tighter leading-none mt-0.5">
+            <div className="text-lg font-black tracking-tighter leading-none mt-1">
               <span className="text-[#00AEEF]">Digital</span>
             </div>
           </div>
