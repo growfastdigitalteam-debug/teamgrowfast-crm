@@ -55,7 +55,7 @@ export function useAuth() {
                 .from('users')
                 .select('*, tenants(*)')
                 .eq('id', userId)
-                .single()
+                .maybeSingle()
 
             if (error) {
                 throw error
