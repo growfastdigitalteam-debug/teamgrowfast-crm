@@ -450,9 +450,12 @@ function LoginPage({ onLogin, companies }: { onLogin: (user: User) => void; comp
       <div className="w-full max-w-md">
         <Card className="border-border shadow-lg">
           <CardHeader className="text-center pb-2">
-            <div className="flex flex-col items-center mb-4">
-              <img src="/logo-icon.png" alt="Logo Icon" className="w-16 h-16 object-contain" />
-              <img src="/logo-text.png" alt="GrowFastDigital" className="h-8 mt-2 object-contain" />
+            <div className="flex flex-col items-center mb-6">
+              <img src="/logo-icon.png" alt="Logo Icon" className="w-20 h-20 object-contain" />
+              <div className="text-3xl font-black tracking-tight mt-3">
+                <span className="text-foreground">GrowFast</span>
+                <span className="text-[#00AEEF]">Digital</span>
+              </div>
             </div>
             <CardDescription>Sign in to your account to continue</CardDescription>
           </CardHeader>
@@ -528,9 +531,10 @@ function SuperAdminDashboard({ user, onLogout }: { user: User; onLogout: () => v
         mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
         <div className="h-16 flex items-center justify-between px-6 border-b border-sidebar-border">
-          <div className="flex items-center gap-2">
-            <img src="/logo-icon.png" alt="Logo Icon" className="w-8 h-8 object-contain" />
-            <img src="/logo-text.png" alt="GrowFastDigital" className="h-5 object-contain" />
+          <img src="/logo-icon.png" alt="Logo Icon" className="w-10 h-10 object-contain" />
+          <div className="text-xl font-black tracking-tighter">
+            <span className="text-sidebar-foreground">GrowFast</span>
+            <span className="text-[#00AEEF]">Digital</span>
           </div>
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobileMenuOpen(false)}>
             <X className="w-5 h-5" />
@@ -973,9 +977,10 @@ function CRMUserDashboard({ user, onLogout }: { user: User; onLogout: () => void
         mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
         <div className="h-16 flex items-center justify-between px-6 border-b border-sidebar-border">
-          <div className="flex items-center gap-2">
-            <img src="/logo-icon.png" alt="Logo Icon" className="w-8 h-8 object-contain" />
-            <img src="/logo-text.png" alt="GrowFastDigital" className="h-5 object-contain" />
+          <img src="/logo-icon.png" alt="Logo Icon" className="w-10 h-10 object-contain" />
+          <div className="text-xl font-black tracking-tighter">
+            <span className="text-sidebar-foreground">GrowFast</span>
+            <span className="text-[#00AEEF]">Digital</span>
           </div>
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobileMenuOpen(false)}>
             <X className="w-5 h-5" />
