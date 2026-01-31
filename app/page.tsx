@@ -11,18 +11,18 @@ import { FullPageLoader } from '@/components/loading-spinner'
 import { ROUTES } from '@/lib/constants'
 
 export default function HomePage() {
-  const { isLoading, isAuthenticated } = useAuthContext()
-  const router = useRouter()
+    const { isLoading, isAuthenticated } = useAuthContext()
+    const router = useRouter()
 
-  useEffect(() => {
-    if (!isLoading) {
-      if (isAuthenticated) {
-        router.replace(ROUTES.DASHBOARD)
-      } else {
-        router.replace(ROUTES.LOGIN)
-      }
-    }
-  }, [isLoading, isAuthenticated, router])
+    useEffect(() => {
+        if (!isLoading) {
+            if (isAuthenticated) {
+                router.replace(ROUTES.DASHBOARD)
+            } else {
+                router.replace(ROUTES.LOGIN)
+            }
+        }
+    }, [isLoading, isAuthenticated, router])
 
-  return <FullPageLoader text="Loading CRM..." />
+    return <FullPageLoader text="Loading CRM..." />
 }
