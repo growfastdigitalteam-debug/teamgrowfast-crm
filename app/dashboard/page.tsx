@@ -746,14 +746,18 @@ function CRMUserDashboard({ user, onLogout }: { user: User; onLogout: () => void
         "fixed lg:static inset-y-0 left-0 z-50 w-72 bg-white/70 dark:bg-slate-900/80 backdrop-blur-xl border-r border-slate-200 dark:border-slate-800/50 flex flex-col transition-all duration-300 ease-in-out shadow-2xl lg:shadow-none",
         mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
-        <div className="h-24 flex items-center px-8 gap-4 border-b border-slate-200 dark:border-slate-800/50 relative">
-          <div className="p-2 bg-blue-600/10 dark:bg-blue-500/10 rounded-2xl border border-blue-500/20">
-            <img src="/logo-icon.png" alt="Logo Icon" className="w-10 h-10 object-contain drop-shadow-md" />
-          </div>
-          <div className="flex flex-col">
-            <div className="text-xl font-black tracking-tight leading-none group cursor-default">
-              <span className="text-slate-900 dark:text-white">GrowFast</span>
-              <span className="text-[#00AEEF] block mt-0.5 text-sm uppercase tracking-widest font-bold">Digital</span>
+        <div className="h-28 flex items-center justify-center px-6 border-b border-slate-200 dark:border-slate-800/50 relative bg-white/50 dark:bg-slate-900/50">
+          <div className="flex items-center gap-4 bg-white dark:bg-slate-950 p-4 pr-8 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-black/50 border border-slate-100 dark:border-slate-800">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30 text-white">
+              <TrendingUp className="w-6 h-6 stroke-[3]" />
+            </div>
+            <div>
+              <h1 className="font-black text-xl tracking-tighter text-slate-900 dark:text-white leading-none">
+                GrowFast
+              </h1>
+              <span className="text-[9px] font-black tracking-[0.25em] text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 uppercase block mt-1">
+                DIGITAL
+              </span>
             </div>
           </div>
           <Button variant="ghost" size="icon" className="ml-auto lg:hidden rounded-full hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => setMobileMenuOpen(false)}>
@@ -1022,28 +1026,27 @@ function DashboardView({ companyId, onStatusClick }: { companyId: number; onStat
           <Badge className="rounded-xl px-4 py-2 bg-blue-600/10 text-blue-600 border-none font-black uppercase tracking-widest text-[10px]">Active Node</Badge>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
           {activityStats.map((stat, idx) => (
             <div
               key={stat.title}
               onClick={() => onStatusClick && onStatusClick(stat.title === "Total Portfolio" ? "" : stat.title)}
-              className="group relative rounded-[2.5rem] p-10 transition-all duration-500 hover:-translate-y-2 active:scale-95 cursor-pointer overflow-hidden shadow-2xl"
+              className="group relative rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl active:scale-95 cursor-pointer overflow-hidden"
               style={{ backgroundColor: stat.color }}
             >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-[60px] -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
+              <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 blur-3xl -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-500" />
 
-              <div className="relative z-10 flex flex-col h-full">
-                <div className="flex items-center justify-between mb-6">
-                  <p className={cn("text-[10px] font-black uppercase tracking-[0.3em] opacity-60", getTextColor(stat.color))}>{stat.title}</p>
-                  <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center bg-white/10 backdrop-blur-md", getTextColor(stat.color))}>
-                    <TrendingUp className="w-4 h-4" />
+              <div className="relative z-10 flex flex-col">
+                <div className="flex items-center justify-between mb-3">
+                  <p className={cn("text-[9px] font-black uppercase tracking-wider opacity-70", getTextColor(stat.color))}>{stat.title}</p>
+                  <div className={cn("w-6 h-6 rounded-lg flex items-center justify-center bg-white/10 backdrop-blur-sm", getTextColor(stat.color))}>
+                    <TrendingUp className="w-3 h-3" />
                   </div>
                 </div>
-                <p className={cn("text-6xl font-black tracking-tighter", getTextColor(stat.color))}>{stat.count.toLocaleString()}</p>
-                <div className={cn("mt-auto pt-8 flex items-center gap-3 text-[10px] font-black uppercase tracking-widest opacity-60", getTextColor(stat.color))}>
-                  <div className="w-full h-1 bg-current opacity-20 rounded-full" />
-                  <span>Inspect</span>
-                </div>
+                <p className={cn("text-4xl font-black tracking-tight", getTextColor(stat.color))}>{stat.count.toLocaleString()}</p>
+                <p className={cn("text-[8px] font-bold uppercase tracking-widest opacity-50 mt-2", getTextColor(stat.color))}>
+                  {stat.count === 1 ? 'Lead' : 'Leads'}
+                </p>
               </div>
             </div>
           ))}
@@ -1112,10 +1115,13 @@ function SidebarConversionWidget({ companyId }: { companyId: number }) {
   const { leads } = useData()
   const companyLeads = leads.filter(l => l.companyId === companyId)
 
-  const bookedCount = companyLeads.filter(l => l.status === "Booked").length
+  // Calculate real conversion stats
+  const bookedCount = companyLeads.filter(l =>
+    ["Booked", "Converted", "Site Visit Completed"].includes(l.status)
+  ).length
   const totalLeads = companyLeads.length
   const conversionValue = totalLeads > 0 ? (bookedCount / totalLeads) * 100 : 0
-  const conversionRate = conversionValue.toFixed(2)
+  const conversionRate = conversionValue.toFixed(1)
 
   const getConversionColor = (val: number) => {
     if (val === 0) return "text-muted-foreground"
