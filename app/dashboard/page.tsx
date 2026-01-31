@@ -605,71 +605,34 @@ function CompaniesView({
     setNewCompanyPassword(password)
   }
 
-  const handleAddCompany = () => {
+  const handleAddCompany = async () => {
     if (newCompanyName && newCompanyEmail && newCompanyPassword) {
-      const newCompanyId = Math.max(...companies.map(c => c.id), 0) + 1
-      const newCompany: Company = {
-        id: newCompanyId,
-        name: newCompanyName,
-        adminEmail: newCompanyEmail,
-        password: newCompanyPassword,
-        status: "Active",
-        createdAt: new Date().toISOString().split("T")[0],
+      try {
+        const response = await fetch('/api/create-company', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: newCompanyName,
+            email: newCompanyEmail,
+            password: newCompanyPassword
+          })
+        })
+
+        const result = await response.json()
+
+        if (response.ok) {
+          alert(`SUCCESS!\n\nCompany Created: ${newCompanyName}\nLogin Email: ${newCompanyEmail}\nPassword: ${newCompanyPassword}\n\nPlease copy these credentials.`)
+
+          setNewCompanyName("")
+          setNewCompanyEmail("")
+          setNewCompanyPassword("")
+          setAddCompanyOpen(false)
+        } else {
+          alert("Error creating company: " + result.error)
+        }
+      } catch (err: any) {
+        alert("Network error: " + err.message)
       }
-
-      // 1. Add the company
-      setCompanies([...companies, newCompany])
-
-      const timestamp = Date.now()
-
-      // 2. Add default Categories
-      const defaultCategories: Category[] = [
-        { id: timestamp + 1, companyId: newCompanyId, name: "Hot Lead", color: "#ef4444" },
-        { id: timestamp + 2, companyId: newCompanyId, name: "Warm Lead", color: "#f59e0b" },
-        { id: timestamp + 3, companyId: newCompanyId, name: "Cold Lead", color: "#3b82f6" },
-        { id: timestamp + 4, companyId: newCompanyId, name: "Converted", color: "#22c55e" },
-      ]
-      setCategories(prev => [...prev, ...defaultCategories])
-
-      // 3. Add default Sources
-      const defaultSources: Source[] = [
-        { id: timestamp + 5, companyId: newCompanyId, name: "Facebook", color: "#1877f2" },
-        { id: timestamp + 6, companyId: newCompanyId, name: "Google Ads", color: "#ea4335" },
-        { id: timestamp + 7, companyId: newCompanyId, name: "Instagram", color: "#e1306c" },
-        { id: timestamp + 8, companyId: newCompanyId, name: "Website", color: "#334155" },
-        { id: timestamp + 9, companyId: newCompanyId, name: "WhatsApp", color: "#25d366" },
-        { id: timestamp + 10, companyId: newCompanyId, name: "Cold Calling", color: "#6366f1" },
-        { id: timestamp + 11, companyId: newCompanyId, name: "Walk-in", color: "#f59e0b" },
-        { id: timestamp + 12, companyId: newCompanyId, name: "Referral", color: "#8b5cf6" },
-        { id: timestamp + 13, companyId: newCompanyId, name: "Newspaper", color: "#64748b" },
-      ]
-      setSources(prev => [...prev, ...defaultSources])
-
-      // 4. Add default Activity Types (Lead Status)
-      const defaultActivityTypes: ActivityType[] = [
-        { id: timestamp + 14, companyId: newCompanyId, name: "Interested", color: "#22c55e" },
-        { id: timestamp + 15, companyId: newCompanyId, name: "Site Visit Scheduled", color: "#fbbf24" },
-        { id: timestamp + 16, companyId: newCompanyId, name: "Site Visit Completed", color: "#10b981" },
-        { id: timestamp + 17, companyId: newCompanyId, name: "Booked", color: "#3b82f6" },
-        { id: timestamp + 18, companyId: newCompanyId, name: "Junk Lead", color: "#ef4444" },
-        { id: timestamp + 19, companyId: newCompanyId, name: "Not Interested", color: "#991b1b" },
-        { id: timestamp + 20, companyId: newCompanyId, name: "Call Back", color: "#8b5cf6" },
-        { id: timestamp + 21, companyId: newCompanyId, name: "Not Responding", color: "#64748b" },
-      ]
-      setActivityTypes(prev => [...prev, ...defaultActivityTypes])
-
-      // 5. Add default Teams
-      const defaultTeams: Team[] = [
-        { id: timestamp + 17, companyId: newCompanyId, name: "Sales Team A", color: "#8b5cf6" },
-        { id: timestamp + 18, companyId: newCompanyId, name: "Sales Team B", color: "#06b6d4" },
-        { id: timestamp + 19, companyId: newCompanyId, name: "Support Team", color: "#f97316" },
-      ]
-      setTeams(prev => [...prev, ...defaultTeams])
-
-      setNewCompanyName("")
-      setNewCompanyEmail("")
-      setNewCompanyPassword("")
-      setAddCompanyOpen(false)
     }
   }
 
