@@ -79,6 +79,7 @@ interface DataContextType {
     isLoading: boolean
     refreshData: () => Promise<void>
     addLead: (lead: Omit<Lead, "id" | "createdAt" | "updatedAt">) => Promise<boolean>
+    bulkAddLeads: (leads: Omit<Lead, "id" | "createdAt" | "updatedAt">[]) => Promise<boolean>
     updateLead: (id: number, updates: Partial<Lead>) => Promise<boolean>
     deleteLead: (id: number) => Promise<boolean>
 }
@@ -246,7 +247,7 @@ export function SupabaseDataProvider({ children }: { children: ReactNode }) {
         try {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) {
-                alert("Please login first")
+                toast.error("Please login first")
                 return false
             }
 
@@ -255,18 +256,22 @@ export function SupabaseDataProvider({ children }: { children: ReactNode }) {
 
             // If not found, check DB profile
             if (!tenantId) {
-                const { data: publicUser } = await supabase
+                const { data: publicUser, error: profileError } = await supabase
                     .from('users')
                     .select('tenant_id')
                     .eq('id', user.id)
                     .maybeSingle()
 
-                if (publicUser) tenantId = publicUser.tenant_id
+                if (publicUser?.tenant_id) {
+                    tenantId = publicUser.tenant_id
+                } else if (profileError) {
+                    console.error("Profile fetch error:", profileError)
+                }
             }
 
             if (!tenantId) {
-                alert("Error: Tenant ID is missing. Cannot save lead.")
-                console.error("Missing tenant_id for user", user.id)
+                console.error("Critical: Could not resolve tenant_id for user", user.id)
+                toast.error("Auth Error: Tenant ID not found. Please re-login.")
                 return false
             }
 
@@ -300,8 +305,50 @@ export function SupabaseDataProvider({ children }: { children: ReactNode }) {
 
         } catch (err: any) {
             console.error(err)
-            alert("Save Failed: " + err.message)
             toast.error("Save Failed: " + err.message)
+            return false
+        }
+    }
+
+    const bulkAddLeads = async (leadsData: Omit<Lead, "id" | "createdAt" | "updatedAt">[]) => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return false
+
+            let tenantId = user.user_metadata?.tenant_id
+            if (!tenantId) {
+                const { data: profile } = await supabase.from('users').select('tenant_id').eq('id', user.id).maybeSingle()
+                tenantId = profile?.tenant_id
+            }
+
+            if (!tenantId) throw new Error("Tenant ID not found")
+
+            const payload = leadsData.map(l => ({
+                tenant_id: tenantId,
+                name: l.fullName,
+                phone: l.mobile,
+                alternate_phone: l.whatsapp,
+                source: l.source,
+                category: l.category,
+                status: l.status,
+                notes: l.remarks,
+                custom_fields: {
+                    location: l.location,
+                    flatConfig: l.flatConfig,
+                    remarksHistory: l.remarksHistory
+                },
+                created_by: user.id
+            }))
+
+            const { error } = await supabase.from('leads').insert(payload)
+            if (error) throw error
+
+            toast.success(`${leadsData.length} Leads Imported! ☁️`)
+            await fetchData()
+            return true
+        } catch (err: any) {
+            console.error(err)
+            toast.error("Bulk Import Failed: " + err.message)
             return false
         }
     }
@@ -384,6 +431,7 @@ export function SupabaseDataProvider({ children }: { children: ReactNode }) {
             isLoading,
             refreshData: fetchData,
             addLead,
+            bulkAddLeads,
             updateLead,
             deleteLead
         }}>

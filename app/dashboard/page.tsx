@@ -92,16 +92,18 @@ import { Badge } from "@/components/ui/badge"
 // ============================================
 // TYPES
 // ============================================
-type UserRole = "admin" | "user" | null
-type PageType =
-  | "dashboard"
-  | "categorys"
-  | "leads-center"
-  | "leads-assign"
-  | "user-list"
-  | "how-to-use"
-  | "settings"
-  | "companies"
+import {
+  type Company,
+  type Lead,
+  type Category,
+  type Source,
+  type Team,
+  type ActivityType,
+  type CRMUser as UserDB,
+  useData
+} from "@/lib/supabase-provider"
+
+type UserRole = "admin" | "user" | "superadmin" | null
 
 interface User {
   username: string
@@ -111,161 +113,30 @@ interface User {
   company?: string
 }
 
-interface Company {
-  id: number
-  name: string
-  adminEmail: string
-  password: string
-  status: "Active" | "Blocked"
-  createdAt: string
-}
-
-interface Remark {
-  id: string
-  text: string
-  date: string
-  author: string
-}
-
-interface Lead {
-  id: number
-  companyId: number
-  fullName: string
-  mobile: string
-  whatsapp: string
-  location: string
-  flatConfig: string
-  source: string
-  category: string
-  status: string
-  remarks: string
-  remarksHistory: Remark[]
-  assignedAgent: string
-  createdAt: string
-  updatedAt: string // For sorting by recent activity
-}
-
-interface Category {
-  id: number
-  companyId: number
-  name: string
-  color: string
-}
-
-interface Source {
-  id: number
-  companyId: number
-  name: string
-  color: string
-}
-
-interface Team {
-  id: number
-  companyId: number
-  name: string
-  color: string
-}
-
-interface ActivityType {
-  id: number
-  companyId: number
-  name: string
-  color: string
-}
-
-interface CRMUser {
-  id: number
-  companyId: number
-  name: string
-  email: string
-  role: string
-  status: "Active" | "Blocked"
-}
+type PageType =
+  | "dashboard"
+  | "categories"
+  | "leads-center"
+  | "leads-assign"
+  | "user-list"
+  | "settings"
+  | "how-to-use"
+  | "companies"
 
 
 // ============================================
-// INITIAL DATA
-// ============================================
-const initialCompanies: Company[] = [
-  { id: 1, name: "GrowFastDigital", adminEmail: "admin@growfastdigital.com", password: "growfastdigital123", status: "Active", createdAt: "2024-01-15" },
-  { id: 2, name: "Test Builders", adminEmail: "admin@testbuilders.com", password: "testbuilders123", status: "Active", createdAt: "2024-02-20" },
-  { id: 3, name: "Horizon Developers", adminEmail: "admin@horizon.com", password: "horizon123", status: "Blocked", createdAt: "2024-03-10" },
-]
-
-const initialCategories: Category[] = [
-  { id: 1, companyId: 1, name: "Hot Lead", color: "#ef4444" },
-  { id: 2, companyId: 1, name: "Warm Lead", color: "#f59e0b" },
-  { id: 3, companyId: 1, name: "Cold Lead", color: "#3b82f6" },
-  { id: 4, companyId: 1, name: "Converted", color: "#22c55e" },
-  { id: 5, companyId: 2, name: "Investment", color: "#3b82f6" },
-  { id: 6, companyId: 2, name: "Residential", color: "#22c55e" },
-]
-
-const initialSources: Source[] = [
-  { id: 1, companyId: 1, name: "Facebook", color: "#1877f2" },
-  { id: 2, companyId: 1, name: "Google Ads", color: "#ea4335" },
-  { id: 3, companyId: 1, name: "Instagram", color: "#e1306c" },
-  { id: 4, companyId: 1, name: "Website", color: "#334155" },
-  { id: 5, companyId: 1, name: "WhatsApp", color: "#25d366" },
-  { id: 6, companyId: 1, name: "Cold Calling", color: "#6366f1" },
-  { id: 7, companyId: 1, name: "Walk-in", color: "#f59e0b" },
-  { id: 8, companyId: 1, name: "Referral", color: "#8b5cf6" },
-  { id: 9, companyId: 1, name: "Newspaper", color: "#64748b" },
-  { id: 10, companyId: 2, name: "Referral", color: "#f59e0b" },
-  { id: 11, companyId: 2, name: "Social Media", color: "#1877f2" },
-]
-
-const initialTeams: Team[] = [
-  { id: 1, companyId: 1, name: "Sales Team A", color: "#8b5cf6" },
-  { id: 2, companyId: 1, name: "Sales Team B", color: "#06b6d4" },
-  { id: 3, companyId: 1, name: "Support Team", color: "#f97316" },
-  { id: 4, companyId: 2, name: "Direct Sales", color: "#8b5cf6" },
-]
-
-const initialActivityTypes: ActivityType[] = [
-  { id: 1, companyId: 1, name: "Interested", color: "#22c55e" },
-  { id: 2, companyId: 1, name: "Site Visit Scheduled", color: "#fbbf24" },
-  { id: 3, companyId: 1, name: "Site Visit Completed", color: "#10b981" },
-  { id: 4, companyId: 1, name: "Booked", color: "#3b82f6" },
-  { id: 5, companyId: 1, name: "Junk Lead", color: "#ef4444" },
-  { id: 6, companyId: 1, name: "Not Interested", color: "#991b1b" },
-  { id: 7, companyId: 1, name: "Call Back", color: "#8b5cf6" },
-  { id: 8, companyId: 1, name: "Not Responding", color: "#64748b" },
-  { id: 9, companyId: 2, name: "Interested", color: "#22c55e" },
-  { id: 10, companyId: 2, name: "Not Interested", color: "#ef4444" },
-]
-
-const initialLeads: Lead[] = []
-
-const initialUsers: CRMUser[] = [
-  { id: 1, companyId: 1, name: "John Smith", email: "john@growfastdigital.com", role: "Sales Agent", status: "Active" },
-  { id: 2, companyId: 1, name: "Sarah Johnson", email: "sarah@growfastdigital.com", role: "Team Lead", status: "Active" },
-  { id: 3, companyId: 2, name: "Michael Test", email: "michael@test.com", role: "Manager", status: "Active" },
-]
-
-
-
-
-// ============================================
-// DATA CONTEXT REPLACEMENT
-// ============================================
-import { SupabaseDataProvider, useData as useSupabaseData } from "@/lib/supabase-provider"
-
-// We export this so sub-components can use it
-export const useData = useSupabaseData
-
 
 // ============================================
 // MENU ITEMS
 // ============================================
 const menuItems = [
   { id: "dashboard" as const, label: "Dashboard", icon: LayoutDashboard },
-  { id: "categorys" as const, label: "Categorys", icon: FolderTree },
+  { id: "categories" as const, label: "Categories", icon: FolderTree },
   { id: "add-lead" as const, label: "Add New Leads", icon: UserPlus },
   { id: "leads-center" as const, label: "Leads Center", icon: Users },
-  { id: "leads-assign" as const, label: "Leads Assign", icon: UserCheck },
-  { id: "user-list" as const, label: "User List", icon: UserCog },
-  { id: "how-to-use" as const, label: "How to use", icon: HelpCircle },
+  { id: "leads-assign" as const, label: "Assignments", icon: UserCheck },
+  { id: "user-list" as const, label: "Team Management", icon: UserCog },
+  { id: "how-to-use" as const, label: "Support Guide", icon: HelpCircle },
 ]
 
 const adminMenuItems = [
@@ -299,8 +170,7 @@ function CRMAppContent() {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user) {
-        // Determine role from metadata or query public users table
-        // For now, assume Admin or fetch profile
+        // Determine role and tenant from profile
         const { data: profile } = await supabase
           .from('users')
           .select('role, full_name, tenant_id')
@@ -308,12 +178,19 @@ function CRMAppContent() {
           .maybeSingle()
 
         if (profile) {
+          // Fetch real tenant name
+          const { data: tenant } = await supabase
+            .from('tenants')
+            .select('name')
+            .eq('id', profile.tenant_id)
+            .maybeSingle()
+
           setUser({
             username: session.user.email!,
             role: profile.role,
             displayName: profile.full_name || "User",
-            company: "GrowFast", // TODO: fetch tenant name
-            companyId: 1
+            company: tenant?.name || "GrowFast",
+            companyId: 1 // Stable internal ID
           })
         } else if (session.user.email === "admin@admin.com") {
           // Fallback for Admin
@@ -380,18 +257,29 @@ function LoginPage({ onLogin, companies }: { onLogin: (user: User) => void; comp
       }
 
       if (data.user) {
-        // Should fetch profile to get role
+        // Fetch profile
         const { data: profile } = await supabase
           .from('users')
-          .select('role, full_name')
+          .select('role, full_name, tenant_id')
           .eq('id', data.user.id)
           .maybeSingle()
 
+        // Fetch tenant name
+        let tenantName = "GrowFast"
+        if (profile?.tenant_id) {
+          const { data: tenant } = await supabase
+            .from('tenants')
+            .select('name')
+            .eq('id', profile.tenant_id)
+            .maybeSingle()
+          if (tenant) tenantName = tenant.name
+        }
+
         onLogin({
           username: data.user.email!,
-          role: profile?.role || "user",
+          role: (profile?.role as any) || "user",
           displayName: profile?.full_name || "User",
-          company: "GrowFast",
+          company: tenantName,
           companyId: 1
         })
       }
@@ -403,47 +291,64 @@ function LoginPage({ onLogin, companies }: { onLogin: (user: User) => void; comp
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <Card className="border-border shadow-lg">
-          <CardHeader className="text-center pb-2">
-            <div className="flex flex-col items-center mb-8">
-              <img src="/logo-icon.png" alt="Logo Icon" className="w-36 h-36 object-contain drop-shadow-sm" />
-              <div className="text-4xl font-black tracking-tight mt-4 flex items-center gap-1">
-                <span className="text-foreground">GrowFast</span>
-                <span className="text-[#00AEEF]">Digital</span>
-              </div>
+    <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none" />
+
+      <div className="w-full max-w-lg z-10">
+        <div className="text-center mb-10 animate-in fade-in slide-in-from-top-4 duration-1000">
+          <div className="flex justify-center mb-6">
+            <div className="p-4 bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl">
+              <img src="/logo-icon.png" alt="Logo Icon" className="w-24 h-24 object-contain" />
             </div>
-            <CardDescription>Sign in to your account to continue</CardDescription>
+          </div>
+          <h1 className="text-5xl font-black tracking-tight flex items-center justify-center gap-2">
+            <span className="text-white">GrowFast</span>
+            <span className="text-[#00AEEF]">Digital</span>
+          </h1>
+          <p className="text-slate-400 mt-3 text-lg">Next-Gen CRM Dashboard</p>
+        </div>
+
+        <Card className="border-white/10 bg-white/5 backdrop-blur-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-700">
+          <div className="h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-500" />
+          <CardHeader className="text-center pb-2">
+            <CardTitle className="text-2xl text-white font-bold">Sign In</CardTitle>
+            <CardDescription className="text-slate-400">Enter your credentials to access your workspace</CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+          <CardContent className="pt-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  placeholder="Enter your username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="h-11"
-                />
+                <Label htmlFor="username" className="text-slate-200">Email Address</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Input
+                    id="username"
+                    placeholder="name@company.com"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="h-12 pl-10 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:ring-blue-500/50"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" title="Password" className="text-slate-200">Password</Label>
                 <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
+                    placeholder="••••••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="h-11 pr-10"
+                    className="h-12 pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:ring-blue-500/50"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -451,18 +356,30 @@ function LoginPage({ onLogin, companies }: { onLogin: (user: User) => void; comp
               </div>
 
               {error && (
-                <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-lg text-center">
+                <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-4 rounded-xl text-center animate-in shake-in duration-500">
                   {error}
                 </div>
               )}
 
-              <Button type="submit" className="w-full h-11" disabled={isLoading}>
-                {isLoading ? "Signing in..." : "Sign In"}
+              <Button type="submit" className="w-full h-12 text-lg font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20 transition-all hover:scale-[1.02] active:scale-[0.98]" disabled={isLoading}>
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Authenticating...
+                  </div>
+                ) : (
+                  "Sign In to Dashboard"
+                )}
               </Button>
             </form>
-
-
           </CardContent>
+          <div className="p-6 bg-white/5 border-t border-white/5 flex items-center justify-between text-xs text-slate-500">
+            <span>&copy; 2026 GrowFast Digital</span>
+            <div className="flex gap-4">
+              <a href="#" className="hover:text-slate-300">Privacy Policy</a>
+              <a href="#" className="hover:text-slate-300">Terms of Service</a>
+            </div>
+          </div>
         </Card>
       </div>
     </div>
@@ -478,31 +395,34 @@ function SuperAdminDashboard({ user, onLogout }: { user: User; onLogout: () => v
   const [addCompanyOpen, setAddCompanyOpen] = useState(false)
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
       {mobileMenuOpen && (
-        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setMobileMenuOpen(false)} />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-40 lg:hidden transition-all duration-500" onClick={() => setMobileMenuOpen(false)} />
       )}
 
       <aside className={cn(
-        "fixed lg:static inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-sidebar-border flex flex-col transition-transform duration-300",
+        "fixed lg:static inset-y-0 left-0 z-50 w-80 bg-slate-900/50 backdrop-blur-3xl border-r border-slate-800/50 flex flex-col transition-all duration-500 ease-in-out shadow-2xl",
         mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
-        <div className="h-20 flex items-center px-6 gap-3 border-b border-sidebar-border bg-sidebar/50 backdrop-blur-sm">
-          <img src="/logo-icon.png" alt="Logo Icon" className="w-12 h-12 object-contain" />
-          <div className="flex flex-col">
-            <div className="text-lg font-black tracking-tighter leading-none">
-              <span className="text-sidebar-foreground">GrowFast</span>
-            </div>
-            <div className="text-lg font-black tracking-tighter leading-none mt-1">
-              <span className="text-[#00AEEF]">Digital</span>
-            </div>
+        <div className="h-24 flex items-center px-10 gap-5 border-b border-slate-800/50 relative group">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="p-3 bg-blue-600/10 rounded-2xl border border-blue-500/20 shadow-inner">
+            <img src="/logo-icon.png" alt="Logo Icon" className="w-10 h-10 object-contain drop-shadow-2xl" />
           </div>
-          <Button variant="ghost" size="icon" className="ml-auto lg:hidden" onClick={() => setMobileMenuOpen(false)}>
+          <div className="flex flex-col">
+            <div className="text-xl font-black tracking-tight leading-none">
+              <span className="text-white">Elite</span>
+              <span className="text-blue-500">System</span>
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mt-1">Super Gateway</span>
+          </div>
+          <Button variant="ghost" size="icon" className="ml-auto lg:hidden text-slate-400 hover:text-white" onClick={() => setMobileMenuOpen(false)}>
             <X className="w-5 h-5" />
           </Button>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-8 space-y-3 overflow-y-auto scrollbar-hide">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-6 px-4 opacity-50 underline underline-offset-8">Global Control</p>
           {adminMenuItems.map((item) => {
             const isActive = activePage === item.id
             const Icon = item.icon
@@ -511,66 +431,84 @@ function SuperAdminDashboard({ user, onLogout }: { user: User; onLogout: () => v
                 key={item.id}
                 onClick={() => { setActivePage(item.id); setMobileMenuOpen(false) }}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
-                  isActive ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent text-sidebar-foreground"
+                  "w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-sm font-bold transition-all duration-300 relative group",
+                  isActive
+                    ? "bg-blue-600 text-white shadow-xl shadow-blue-600/20"
+                    : "hover:bg-slate-800/50 text-slate-400 hover:text-white"
                 )}
               >
-                <Icon className="w-5 h-5" />
+                <Icon className={cn("w-5 h-5 transition-transform duration-300", isActive ? "scale-110" : "group-hover:translate-x-1")} />
                 {item.label}
+                {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
               </button>
             )
           })}
-          <button
-            onClick={() => { setActivePage("settings"); setMobileMenuOpen(false) }}
-            className={cn(
-              "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
-              activePage === "settings" ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent text-sidebar-foreground"
-            )}
-          >
-            <Settings className="w-5 h-5" />
-            Settings
-          </button>
+
+          <div className="pt-6 mt-6 border-t border-slate-800/50">
+            <button
+              onClick={() => { setActivePage("settings"); setMobileMenuOpen(false) }}
+              className={cn(
+                "w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-sm font-bold transition-all duration-300 group",
+                activePage === "settings"
+                  ? "bg-slate-800 text-white shadow-lg"
+                  : "hover:bg-slate-800/50 text-slate-400 hover:text-white"
+              )}
+            >
+              <Settings className="w-5 h-5 transition-transform group-hover:rotate-45" />
+              Intelligence Settings
+            </button>
+          </div>
         </nav>
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 lg:px-6 shrink-0">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobileMenuOpen(true)}>
-              <Menu className="w-5 h-5" />
+      <div className="flex-1 flex flex-col min-w-0 bg-slate-950/20 backdrop-blur-sm relative">
+        <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/5 via-transparent to-indigo-600/5 pointer-events-none" />
+
+        <header className="h-24 bg-slate-900/40 backdrop-blur-3xl border-b border-slate-800/50 flex items-center justify-between px-10 shrink-0 relative z-20">
+          <div className="flex items-center gap-6">
+            <Button variant="ghost" size="icon" className="lg:hidden text-slate-400" onClick={() => setMobileMenuOpen(true)}>
+              <Menu className="w-6 h-6" />
             </Button>
-            <h1 className="text-lg font-semibold text-foreground">Super Admin Panel</h1>
+            <div>
+              <h1 className="text-2xl font-black text-white tracking-tight uppercase">System Command</h1>
+              <p className="text-[10px] font-black tracking-[0.3em] text-slate-500 uppercase mt-0.5">Global Administrative Gateway</p>
+            </div>
           </div>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-2">
-                <Avatar className="w-8 h-8">
-                  <AvatarFallback className="bg-primary text-primary-foreground text-sm">SA</AvatarFallback>
+              <Button variant="ghost" className="h-14 px-5 rounded-2xl bg-slate-800/40 border border-slate-700/50 flex items-center gap-4 hover:bg-slate-800/60 transition-all group">
+                <Avatar className="w-9 h-9 border-2 border-slate-700/50 group-hover:border-blue-500/50 transition-colors">
+                  <AvatarFallback className="bg-blue-600 text-white text-xs font-black">SA</AvatarFallback>
                 </Avatar>
-                <span className="hidden sm:inline font-medium">{user.displayName}</span>
-                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                <div className="text-left hidden sm:block">
+                  <p className="text-xs font-black text-white leading-none uppercase tracking-wide">{user.displayName}</p>
+                  <p className="text-[9px] font-black text-slate-500 uppercase mt-1 tracking-tighter">Chief Administrator</p>
+                </div>
+                <ChevronDown className="w-4 h-4 text-slate-500 group-hover:text-blue-500 transition-colors" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setActivePage("settings")}>
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
+            <DropdownMenuContent align="end" className="w-64 bg-slate-900/95 backdrop-blur-2xl border-slate-800 rounded-2xl shadow-2xl p-2">
+              <DropdownMenuItem onClick={() => setActivePage("settings")} className="rounded-xl px-4 py-3 text-sm font-bold text-slate-300 focus:bg-blue-600 focus:text-white transition-all">
+                <Settings className="w-4 h-4 mr-3" />
+                System Protocols
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={onLogout} className="text-destructive">
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
+              <DropdownMenuSeparator className="bg-slate-800 my-2" />
+              <DropdownMenuItem onClick={onLogout} className="rounded-xl px-4 py-3 text-sm font-bold text-rose-500 focus:bg-rose-600 focus:text-white transition-all">
+                <LogOut className="w-4 h-4 mr-3" />
+                Terminate Session
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
 
-        <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
-          {activePage === "companies" && (
-            <CompaniesView addCompanyOpen={addCompanyOpen} setAddCompanyOpen={setAddCompanyOpen} />
-          )}
-          {activePage === "settings" && <SettingsView />}
+        <main className="flex-1 p-10 lg:p-12 overflow-y-auto scrollbar-hide relative z-10">
+          <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-6 duration-700">
+            {activePage === "companies" && (
+              <CompaniesView addCompanyOpen={addCompanyOpen} setAddCompanyOpen={setAddCompanyOpen} />
+            )}
+            {activePage === "settings" && <SettingsView />}
+          </div>
         </main>
       </div>
     </div>
@@ -587,19 +525,17 @@ function CompaniesView({
   addCompanyOpen: boolean
   setAddCompanyOpen: (open: boolean) => void
 }) {
-  const { companies, setCompanies, setCategories, setSources, setActivityTypes, setTeams } = useData()
+  const { companies, setCompanies } = useData()
   const [newCompanyName, setNewCompanyName] = useState("")
   const [newCompanyEmail, setNewCompanyEmail] = useState("")
   const [newCompanyPassword, setNewCompanyPassword] = useState("")
   const [viewDetailsCompany, setViewDetailsCompany] = useState<Company | null>(null)
-  const [showCompanyPassword, setShowCompanyPassword] = useState(false)
-  const [copiedField, setCopiedField] = useState<string | null>(null)
   const [editCompany, setEditCompany] = useState<Company | null>(null)
 
   const generateSecurePassword = () => {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%"
     let password = ""
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 16; i++) {
       password += chars.charAt(Math.floor(Math.random() * chars.length))
     }
     setNewCompanyPassword(password)
@@ -621,45 +557,27 @@ function CompaniesView({
         const result = await response.json()
 
         if (response.ok) {
-          alert(`SUCCESS!\n\nCompany Created: ${newCompanyName}\nLogin Email: ${newCompanyEmail}\nPassword: ${newCompanyPassword}\n\nPlease copy these credentials.`)
+          alert(`CRITICAL: SECURE TRANSMISSION\n\nEntity Provisioned: ${newCompanyName}\nAccess Email: ${newCompanyEmail}\nAccess Key: ${newCompanyPassword}\n\nEncryption protocols verified.`)
 
           setNewCompanyName("")
           setNewCompanyEmail("")
           setNewCompanyPassword("")
           setAddCompanyOpen(false)
         } else {
-          alert("Error creating company: " + result.error)
+          alert("CORE EXCEPTION: " + result.error)
         }
       } catch (err: any) {
-        alert("Network error: " + err.message)
+        alert("TRANSMISSION FAILURE: " + err.message)
       }
     }
   }
 
-  const handleResetPassword = (companyId: number) => {
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%"
-    let newPass = ""
-    for (let i = 0; i < 12; i++) {
-      newPass += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-    setCompanies(companies.map(c => c.id === companyId ? { ...c, password: newPass } : c))
-    if (viewDetailsCompany?.id === companyId) {
-      setViewDetailsCompany({ ...viewDetailsCompany, password: newPass })
-    }
-  }
-
-  const copyToClipboard = (text: string, field: string) => {
-    navigator.clipboard.writeText(text)
-    setCopiedField(field)
-    setTimeout(() => setCopiedField(null), 2000)
-  }
-
   const handleDeleteCompany = (id: number) => {
-    const confirmation = window.prompt("SECURITY CHECK: Type 'delete' to confirm deletion of this company.")
-    if (confirmation === "delete") {
+    const confirmation = window.prompt("SECURITY OVERRIDE: Type 'purge' to incinerate this company data.")
+    if (confirmation === "purge") {
       setCompanies(companies.filter((c) => c.id !== id))
     } else {
-      alert("Deletion cancelled. You must type 'delete' exactly.")
+      alert("Override aborted. Safeguards maintained.")
     }
   }
 
@@ -675,202 +593,129 @@ function CompaniesView({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-12">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Registered Companies</h1>
-          <p className="text-muted-foreground">Manage all tenant companies</p>
+          <h2 className="text-4xl font-black text-white tracking-tight uppercase">Corporate Entities</h2>
+          <p className="text-slate-500 font-medium mt-2">Oversee and manage high-tier organizational gateways</p>
         </div>
         <Dialog open={addCompanyOpen} onOpenChange={setAddCompanyOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="w-4 h-4" />
-              Add New Company
+            <Button className="h-16 px-10 rounded-2xl bg-blue-600 text-white font-black shadow-2xl shadow-blue-600/30 hover:scale-[1.02] active:scale-95 transition-all">
+              <Plus className="w-6 h-6 mr-3" />
+              Provision New Entity
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-md bg-slate-900/90 backdrop-blur-3xl border-slate-800 rounded-[2.5rem] p-10 shadow-[0_0_100px_rgba(37,99,235,0.1)]">
             <DialogHeader>
-              <DialogTitle>Add New Company</DialogTitle>
+              <DialogTitle className="text-2xl font-black text-white tracking-tight">Provision Intel Entity</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-4">
+            <div className="space-y-6 py-8">
               <div className="space-y-2">
-                <Label htmlFor="companyName">Company Name</Label>
-                <Input id="companyName" placeholder="Enter company name" value={newCompanyName} onChange={(e) => setNewCompanyName(e.target.value)} />
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Entity Denomination</Label>
+                <Input value={newCompanyName} onChange={(e) => setNewCompanyName(e.target.value)} placeholder="Nexus Corporation" className="h-14 rounded-2xl bg-slate-950/50 border-slate-800 focus:border-blue-500/50 transition-all font-bold text-white" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="companyEmail">Admin Email</Label>
-                <Input id="companyEmail" type="email" placeholder="Enter admin email" value={newCompanyEmail} onChange={(e) => setNewCompanyEmail(e.target.value)} />
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Master Access Email</Label>
+                <Input value={newCompanyEmail} onChange={(e) => setNewCompanyEmail(e.target.value)} placeholder="admin@nexus.com" className="h-14 rounded-2xl bg-slate-950/50 border-slate-800 focus:border-blue-500/50 transition-all font-bold text-white" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="companyPassword">Password</Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Initial Access Key</Label>
                 <div className="flex gap-2">
-                  <Input id="companyPassword" type="text" placeholder="Enter password" value={newCompanyPassword} onChange={(e) => setNewCompanyPassword(e.target.value)} className="flex-1" />
-                  <Button type="button" variant="outline" onClick={generateSecurePassword} className="gap-2 shrink-0 bg-transparent">
-                    <KeyRound className="w-4 h-4" />
-                    Generate
+                  <Input value={newCompanyPassword} onChange={(e) => setNewCompanyPassword(e.target.value)} placeholder="••••••••••••" type="text" className="h-14 rounded-2xl bg-slate-950/50 border-slate-800 focus:border-blue-500/50 transition-all font-mono font-bold text-blue-400" />
+                  <Button variant="ghost" size="icon" onClick={generateSecurePassword} className="h-14 w-14 rounded-2xl bg-slate-800/50 hover:bg-slate-800 text-blue-500 transition-all">
+                    <History className="w-5 h-5" />
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">Click Generate to create a secure password</p>
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setAddCompanyOpen(false)}>Cancel</Button>
-              <Button onClick={handleAddCompany} disabled={!newCompanyName || !newCompanyEmail || !newCompanyPassword}>Add Company</Button>
+            <DialogFooter className="gap-3">
+              <Button variant="ghost" onClick={() => setAddCompanyOpen(false)} className="h-14 px-8 rounded-xl font-black text-slate-400 hover:text-white transition-all uppercase tracking-widest text-[10px]">Abort</Button>
+              <Button onClick={handleAddCompany} disabled={!newCompanyName || !newCompanyEmail || !newCompanyPassword} className="h-14 px-10 rounded-xl bg-white text-slate-950 font-black shadow-xl hover:bg-blue-50 transition-all uppercase tracking-widest text-[10px]">Verify & Release</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Company Name</TableHead>
-                <TableHead>Admin Email</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created At</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {companies.map((company) => (
-                <TableRow key={company.id}>
-                  <TableCell className="font-medium">{company.name}</TableCell>
-                  <TableCell>{company.adminEmail}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={company.status === "Active" ? "default" : "destructive"}
-                      className={cn(company.status === "Active" ? "bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20" : "")}
-                    >
-                      {company.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{company.createdAt}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => setViewDetailsCompany(company)} title="View Details">
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setEditCompany(company)} title="Edit">
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleToggleStatus(company.id)} title={company.status === "Active" ? "Block" : "Activate"}>
-                        <LogIn className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDeleteCompany(company.id)} className="text-destructive hover:text-destructive" title="Delete">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+        {companies.map((company) => (
+          <div key={company.id} className="group bg-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] p-10 border border-slate-800/50 shadow-xl hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] hover:border-blue-500/30 transition-all duration-500 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 blur-[80px] -mr-16 -mt-16 group-hover:bg-blue-600/10 transition-all duration-700" />
 
-      {/* View Details Modal */}
-      <Dialog open={!!viewDetailsCompany} onOpenChange={(open) => !open && setViewDetailsCompany(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Company Access Details</DialogTitle>
-          </DialogHeader>
-          {viewDetailsCompany && (
-            <div className="space-y-4 py-4">
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <Label className="text-muted-foreground text-xs uppercase tracking-wide">Company Name</Label>
-                  <p className="font-semibold text-foreground">{viewDetailsCompany.name}</p>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-muted-foreground text-xs uppercase tracking-wide">Login URL</Label>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 bg-muted px-3 py-2 rounded text-sm font-mono break-all">
-                      {typeof window !== "undefined" ? window.location.origin : "https://crm.teamgrowfast.com"}
-                    </code>
-                    <Button variant="ghost" size="sm" onClick={() => copyToClipboard(typeof window !== "undefined" ? window.location.origin : "https://crm.teamgrowfast.com", "url")} title="Copy URL">
-                      {copiedField === "url" ? <span className="text-emerald-500 text-xs">Copied!</span> : <Copy className="w-4 h-4" />}
-                    </Button>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-muted-foreground text-xs uppercase tracking-wide">Admin Email (Username)</Label>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 bg-muted px-3 py-2 rounded text-sm font-mono">{viewDetailsCompany.adminEmail}</code>
-                    <Button variant="ghost" size="sm" onClick={() => copyToClipboard(viewDetailsCompany.adminEmail, "email")} title="Copy Email">
-                      {copiedField === "email" ? <span className="text-emerald-500 text-xs">Copied!</span> : <Copy className="w-4 h-4" />}
-                    </Button>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-muted-foreground text-xs uppercase tracking-wide">Password</Label>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 bg-muted px-3 py-2 rounded text-sm font-mono">
-                      {showCompanyPassword ? viewDetailsCompany.password : "••••••••••••"}
-                    </code>
-                    <Button variant="ghost" size="sm" onClick={() => setShowCompanyPassword(!showCompanyPassword)} title={showCompanyPassword ? "Hide Password" : "Show Password"}>
-                      {showCompanyPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => copyToClipboard(viewDetailsCompany.password, "password")} title="Copy Password">
-                      {copiedField === "password" ? <span className="text-emerald-500 text-xs">Copied!</span> : <Copy className="w-4 h-4" />}
-                    </Button>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-muted-foreground text-xs uppercase tracking-wide">Status</Label>
-                  <div>
-                    <Badge variant={viewDetailsCompany.status === "Active" ? "default" : "destructive"} className={cn(viewDetailsCompany.status === "Active" ? "bg-emerald-500/10 text-emerald-600" : "")}>
-                      {viewDetailsCompany.status}
-                    </Badge>
-                  </div>
-                </div>
+            <div className="flex items-start justify-between mb-8 relative z-10">
+              <div className="w-20 h-20 rounded-3xl bg-slate-950 flex items-center justify-center border border-slate-800 shadow-inner group-hover:scale-110 transition-transform duration-500">
+                <Building2 className="w-10 h-10 text-blue-500" />
               </div>
-              <div className="border-t border-border pt-4">
-                <Button variant="outline" onClick={() => handleResetPassword(viewDetailsCompany.id)} className="gap-2 w-full">
-                  <RefreshCw className="w-4 h-4" />
-                  Reset Password
+              <div className="flex gap-2">
+                <Button variant="ghost" size="icon" onClick={() => setEditCompany(company)} className="w-10 h-10 rounded-xl bg-slate-800/50 text-slate-500 hover:text-blue-500 transition-all">
+                  <Pencil className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => handleDeleteCompany(company.id)} className="w-10 h-10 rounded-xl bg-slate-800/50 text-slate-500 hover:text-rose-500 transition-all">
+                  <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
             </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setViewDetailsCompany(null)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
+            <div className="space-y-2 relative z-10">
+              <h3 className="text-2xl font-black text-white tracking-tight uppercase group-hover:text-blue-400 transition-colors">{company.name}</h3>
+              <p className="text-sm font-semibold text-slate-500 tracking-wide">{company.adminEmail}</p>
+            </div>
+
+            <div className="mt-8 flex items-center justify-between border-t border-slate-800/50 pt-8 relative z-10">
+              <div className="flex flex-col">
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Authorization Status</span>
+                <button
+                  onClick={() => handleToggleStatus(company.id)}
+                  className={cn(
+                    "px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all w-fit",
+                    company.status === "Active"
+                      ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white"
+                      : "bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500 hover:text-white"
+                  )}
+                >
+                  {company.status}
+                </button>
+              </div>
+
+              <Button
+                variant="ghost"
+                onClick={() => setViewDetailsCompany(company)}
+                className="h-10 px-5 rounded-xl bg-blue-600/5 text-blue-500 hover:bg-blue-600 hover:text-white font-black text-[9px] uppercase tracking-[0.2em] transition-all"
+              >
+                Inspect Gateway
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
 
       {/* Edit Company Modal */}
       <Dialog open={!!editCompany} onOpenChange={(open) => !open && setEditCompany(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Company</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-md bg-slate-900/90 backdrop-blur-3xl border-slate-800 rounded-[2.5rem] p-10 shadow-2xl">
+          <DialogHeader><DialogTitle className="text-2xl font-black text-white tracking-tight uppercase">Update Entity Profile</DialogTitle></DialogHeader>
           {editCompany && (
-            <div className="space-y-4 py-4">
+            <div className="space-y-6 py-8">
               <div className="space-y-2">
-                <Label>Company Name</Label>
-                <Input value={editCompany.name} onChange={(e) => setEditCompany({ ...editCompany, name: e.target.value })} />
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Entity Denomination</Label>
+                <Input value={editCompany.name} onChange={(e) => setEditCompany({ ...editCompany, name: e.target.value })} className="h-14 rounded-2xl bg-slate-950/50 border-slate-800 font-bold text-white" />
               </div>
               <div className="space-y-2">
-                <Label>Admin Email</Label>
-                <Input value={editCompany.adminEmail} onChange={(e) => setEditCompany({ ...editCompany, adminEmail: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>Password</Label>
-                <Input value={editCompany.password} onChange={(e) => setEditCompany({ ...editCompany, password: e.target.value })} />
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Master Access Email</Label>
+                <Input value={editCompany.adminEmail} onChange={(e) => setEditCompany({ ...editCompany, adminEmail: e.target.value })} className="h-14 rounded-2xl bg-slate-950/50 border-slate-800 font-bold text-white" />
               </div>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditCompany(null)}>Cancel</Button>
-            <Button onClick={handleEditSave}>Save Changes</Button>
+          <DialogFooter className="gap-3">
+            <Button variant="ghost" onClick={() => setEditCompany(null)} className="h-14 px-8 rounded-xl font-black text-slate-400 uppercase tracking-widest text-[10px]">Abort</Button>
+            <Button onClick={handleEditSave} className="h-14 px-10 rounded-xl bg-white text-slate-950 font-black uppercase tracking-widest text-[10px]">Synchronize</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   )
 }
+
+
 
 // ============================================
 // CRM USER DASHBOARD
@@ -893,29 +738,31 @@ function CRMUserDashboard({ user, onLogout }: { user: User; onLogout: () => void
   }
 
   return (
-    <div className="flex h-screen bg-background">
-      {mobileMenuOpen && <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setMobileMenuOpen(false)} />}
+    <div className="flex h-screen bg-slate-50 dark:bg-[#020617] overflow-hidden text-slate-900 dark:text-slate-100">
+      {mobileMenuOpen && <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden transition-all duration-300" onClick={() => setMobileMenuOpen(false)} />}
 
       <aside className={cn(
-        "fixed lg:static inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-sidebar-border flex flex-col transition-transform duration-300",
+        "fixed lg:static inset-y-0 left-0 z-50 w-72 bg-white/70 dark:bg-slate-900/80 backdrop-blur-xl border-r border-slate-200 dark:border-slate-800/50 flex flex-col transition-all duration-300 ease-in-out shadow-2xl lg:shadow-none",
         mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
-        <div className="h-20 flex items-center px-6 gap-3 border-b border-sidebar-border bg-sidebar/50 backdrop-blur-sm">
-          <img src="/logo-icon.png" alt="Logo Icon" className="w-12 h-12 object-contain" />
+        <div className="h-24 flex items-center px-8 gap-4 border-b border-slate-200 dark:border-slate-800/50 relative">
+          <div className="p-2 bg-blue-600/10 dark:bg-blue-500/10 rounded-2xl border border-blue-500/20">
+            <img src="/logo-icon.png" alt="Logo Icon" className="w-10 h-10 object-contain drop-shadow-md" />
+          </div>
           <div className="flex flex-col">
-            <div className="text-lg font-black tracking-tighter leading-none">
-              <span className="text-sidebar-foreground">GrowFast</span>
-            </div>
-            <div className="text-lg font-black tracking-tighter leading-none mt-1">
-              <span className="text-[#00AEEF]">Digital</span>
+            <div className="text-xl font-black tracking-tight leading-none group cursor-default">
+              <span className="text-slate-900 dark:text-white">GrowFast</span>
+              <span className="text-[#00AEEF] block mt-0.5 text-sm uppercase tracking-widest font-bold">Digital</span>
             </div>
           </div>
-          <Button variant="ghost" size="icon" className="ml-auto lg:hidden" onClick={() => setMobileMenuOpen(false)}>
+          <Button variant="ghost" size="icon" className="ml-auto lg:hidden rounded-full hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => setMobileMenuOpen(false)}>
             <X className="w-5 h-5" />
           </Button>
+          <div className="absolute bottom-0 left-8 right-8 h-[1px] bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
         </div>
 
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-6 space-y-2 overflow-y-auto scrollbar-hide">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 mb-4 px-4 opacity-70">Main Menu</p>
           {menuItems.map((item) => {
             const isActive = activePage === item.id
             const Icon = item.icon
@@ -925,9 +772,9 @@ function CRMUserDashboard({ user, onLogout }: { user: User; onLogout: () => void
                 <button
                   key={item.id}
                   onClick={() => setAddLeadOpen(true)}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-sidebar-accent text-sidebar-foreground"
+                  className="w-full flex items-center gap-3 px-4 py-4 rounded-2xl text-sm font-semibold transition-all duration-200 bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 active:scale-[0.98] mt-6"
                 >
-                  <Icon className="w-5 h-5" />
+                  <Plus className="w-5 h-5" />
                   {item.label}
                 </button>
               )
@@ -938,59 +785,83 @@ function CRMUserDashboard({ user, onLogout }: { user: User; onLogout: () => void
                 key={item.id}
                 onClick={() => handleMenuClick(item.id)}
                 className={cn(
-                  "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
-                  isActive ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent text-sidebar-foreground"
+                  "w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-sm font-medium transition-all duration-200 group relative",
+                  isActive
+                    ? "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 shadow-sm"
+                    : "hover:bg-slate-100 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 )}
               >
-                <Icon className="w-5 h-5" />
+                <div className={cn(
+                  "w-1.5 h-1.5 rounded-full absolute left-0 transition-all duration-300 opacity-0",
+                  isActive ? "opacity-100 translate-x-1.5 bg-blue-600" : ""
+                )} />
+                <Icon className={cn("w-5 h-5 transition-transform duration-300", isActive ? "scale-110" : "group-hover:translate-x-0.5")} />
                 {item.label}
+                {isActive && <div className="ml-auto w-1 h-5 bg-blue-600 rounded-full" />}
               </button>
             )
           })}
         </nav>
 
         {/* Persistent Conversion Widget in Sidebar */}
-        <SidebarConversionWidget companyId={user.companyId || 1} />
+        <div className="p-6">
+          <SidebarConversionWidget companyId={user.companyId || 1} />
+        </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 lg:px-6 shrink-0">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobileMenuOpen(true)}>
-              <Menu className="w-5 h-5" />
+      <div className="flex-1 flex flex-col min-w-0 relative">
+        <header className="h-20 bg-white/50 dark:bg-[#020617]/50 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/50 flex items-center justify-between px-6 lg:px-10 shrink-0 z-30">
+          <div className="flex items-center gap-6">
+            <Button variant="ghost" size="icon" className="lg:hidden rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => setMobileMenuOpen(true)}>
+              <Menu className="w-6 h-6" />
             </Button>
             <div className="hidden sm:block">
-              <p className="text-lg font-semibold text-foreground">
-                Welcome, {user.displayName}
-                {user.company && <span className="text-muted-foreground font-normal"> ({user.company})</span>}
-              </p>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                Dashboard Overview
+                <span className="hidden lg:inline text-sm font-normal text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-800">
+                  {user.company || "GrowFast Digital"}
+                </span>
+              </h2>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="relative hidden md:block">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="Search..." className="pl-10 w-48 lg:w-64 bg-background" />
+          <div className="flex items-center gap-4">
+            <div className="relative hidden md:block group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+              <Input
+                placeholder="Find leads, agents..."
+                className="pl-12 w-64 lg:w-80 bg-slate-100/50 dark:bg-slate-800/50 border-transparent hover:bg-slate-100 dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-blue-500/20 transition-all rounded-2xl h-11"
+              />
             </div>
+
+            <div className="h-8 w-[1px] bg-slate-200 dark:bg-slate-800 mx-2 hidden sm:block" />
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2">
-                  <Avatar className="w-8 h-8">
-                    <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                <div className="flex items-center gap-3 pl-2 pr-1 py-1 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800/50 cursor-pointer transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-800 group">
+                  <div className="text-right hidden xl:block">
+                    <p className="text-sm font-bold leading-tight group-hover:text-blue-600 transition-colors">{user.displayName}</p>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{user.role || "Team Member"}</p>
+                  </div>
+                  <Avatar className="w-10 h-10 border-2 border-white dark:border-slate-900 shadow-md ring-2 ring-blue-500/10">
+                    <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-600 text-white text-sm font-bold">
                       {user.displayName.split(" ").map(n => n[0]).join("")}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="hidden sm:inline font-medium">{user.displayName}</span>
-                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                </Button>
+                  <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                </div>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setActivePage("settings")}>
+              <DropdownMenuContent align="end" className="w-56 p-2 rounded-2xl border-slate-200 dark:border-slate-800 shadow-xl">
+                <div className="px-2 py-3 mb-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl lg:hidden">
+                  <p className="text-sm font-bold">{user.displayName}</p>
+                  <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">{user.role}</p>
+                </div>
+                <DropdownMenuItem onClick={() => setActivePage("settings")} className="rounded-xl py-2.5 focus:bg-blue-50 dark:focus:bg-blue-500/10 focus:text-blue-600">
                   <Settings className="w-4 h-4 mr-2" />
                   Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={onLogout} className="text-destructive">
+                <DropdownMenuItem onClick={onLogout} className="text-red-500 rounded-xl py-2.5 focus:bg-red-50 dark:focus:bg-red-500/10 focus:text-red-600">
                   <LogOut className="w-4 h-4 mr-2" />
                   Sign Out
                 </DropdownMenuItem>
@@ -999,14 +870,19 @@ function CRMUserDashboard({ user, onLogout }: { user: User; onLogout: () => void
           </div>
         </header>
 
-        <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
-          {activePage === "dashboard" && <DashboardView companyId={user.companyId || 1} onStatusClick={handleStatusClick} />}
-          {activePage === "categorys" && <CategorysView companyId={user.companyId || 1} />}
-          {activePage === "settings" && <SettingsView companyId={user.companyId || 1} />}
-          {activePage === "leads-center" && <LeadsCenterView companyId={user.companyId || 1} userName={user.displayName} initialStatus={leadStatusFilter} />}
-          {activePage === "leads-assign" && <LeadsAssignView companyId={user.companyId || 1} />}
-          {activePage === "user-list" && <UserListView companyId={user.companyId || 1} />}
-          {activePage === "how-to-use" && <HowToUseView />}
+        <main className="flex-1 p-6 lg:p-10 overflow-y-auto bg-transparent relative">
+          <div className="absolute top-0 right-0 w-[30%] h-[30%] bg-blue-500/5 blur-[100px] pointer-events-none -z-10" />
+          <div className="absolute bottom-0 left-0 w-[30%] h-[30%] bg-indigo-500/5 blur-[100px] pointer-events-none -z-10" />
+
+          <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {activePage === "dashboard" && <DashboardView companyId={user.companyId || 1} onStatusClick={handleStatusClick} />}
+            {activePage === "categories" && <CategoriesView companyId={user.companyId || 1} />}
+            {activePage === "settings" && <SettingsView companyId={user.companyId || 1} />}
+            {activePage === "leads-center" && <LeadsCenterView companyId={user.companyId || 1} userName={user.displayName} initialStatus={leadStatusFilter} />}
+            {activePage === "leads-assign" && <LeadsAssignView companyId={user.companyId || 1} />}
+            {activePage === "user-list" && <UserListView companyId={user.companyId || 1} />}
+            {activePage === "how-to-use" && <HowToUseView />}
+          </div>
         </main>
       </div>
 
@@ -1026,23 +902,19 @@ function DashboardView({ companyId, onStatusClick }: { companyId: number; onStat
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [userFilter, setUserFilter] = useState("all")
 
-  // Helper for Date filtering (createdAt is YYYY-MM-DD)
   const isWithinDateRange = (createdAt: string, range: string) => {
     if (range === "all") return true
     const todayStr = new Date().toISOString().split("T")[0]
     if (range === "today") return createdAt === todayStr
-
     const date = new Date(createdAt)
     const now = new Date()
     const diffTime = Math.abs(now.getTime() - date.getTime())
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
     if (range === "7d") return diffDays <= 7
     if (range === "30d") return diffDays <= 30
     return true
   }
 
-  // Filter leads based on selected criteria
   const companyLeads = leads.filter(l => {
     const isCompany = l.companyId === companyId
     const isSourceMatch = sourceFilter === "all" || l.source === sourceFilter
@@ -1052,61 +924,37 @@ function DashboardView({ companyId, onStatusClick }: { companyId: number; onStat
     return isCompany && isSourceMatch && isCategoryMatch && isUserMatch && isDateMatch
   })
 
-  // Setup company-specific static resources for dropdowns
   const companySources = sources.filter(s => s.companyId === companyId)
   const companyActivityTypes = activityTypes.filter(at => at.companyId === companyId)
   const companyUsers = users.filter(u => u.companyId === companyId)
 
-  // Calculate counts for each activity type plus total leads
   const activityStats = [
     ...companyActivityTypes.map(at => ({
       title: at.name,
       count: companyLeads.filter(l => l.status === at.name).length,
       color: at.color,
     })),
-    { title: "Total Leads", count: companyLeads.length, color: "#94a3b8" },
+    { title: "Total Portfolio", count: companyLeads.length, color: "#1e293b" },
   ]
 
-  // Helper to determine if text should be light or dark based on background
   const getTextColor = (hexColor: string) => {
     const hex = hexColor.replace("#", "")
     const r = parseInt(hex.substring(0, 2), 16)
     const g = parseInt(hex.substring(2, 4), 16)
     const b = parseInt(hex.substring(4, 6), 16)
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-    return luminance > 0.5 ? "text-gray-900" : "text-white"
+    return luminance > 0.5 ? "text-slate-900" : "text-white"
   }
 
-  // Calculate lead counts by source
   const sourceIcons: Record<string, React.ElementType> = {
-    "Facebook": Facebook,
-    "Google Ads": Globe,
-    "Instagram": Instagram,
-    "Website": Globe,
-    "Cold Calling": Phone,
-    "WhatsApp": MessageSquare,
-    "Walk-in": Building,
-    "Referral": UserX,
-    "Newspaper": Newspaper,
-  }
-
-  const sourceColors: Record<string, string> = {
-    "Facebook": "bg-blue-600",
-    "Google Ads": "bg-red-500",
-    "Instagram": "bg-pink-600",
-    "Website": "bg-gray-700",
-    "Cold Calling": "bg-indigo-600",
-    "WhatsApp": "bg-emerald-500",
-    "Walk-in": "bg-amber-500",
-    "Referral": "bg-purple-600",
-    "Newspaper": "bg-slate-600",
+    "Facebook": Facebook, "Google Ads": Globe, "Instagram": Instagram, "Website": Globe,
+    "Cold Calling": Phone, "WhatsApp": MessageSquare, "Walk-in": Building, "Referral": UserX, "Newspaper": Newspaper,
   }
 
   const leadSources = companySources.map(s => ({
     name: s.name,
     icon: sourceIcons[s.name] || Globe,
     count: companyLeads.filter(l => l.source === s.name).length,
-    color: sourceColors[s.name] || "bg-slate-500",
   }))
 
   const categoryStats = categories.filter(c => c.companyId === companyId).map(c => ({
@@ -1115,144 +963,146 @@ function DashboardView({ companyId, onStatusClick }: { companyId: number; onStat
     color: c.color,
   }))
 
-  // Calculate Conversion Rate
-  const bookedCount = companyLeads.filter(l => l.status === "Booked").length
-  const totalLeads = companyLeads.length
-  const conversionValue = totalLeads > 0 ? (bookedCount / totalLeads) * 100 : 0
-  const conversionRate = conversionValue.toFixed(2)
-
-  // Color threshold for conversion rate
-  const getConversionColor = (val: number) => {
-    if (val === 0) return "text-muted-foreground"
-    if (val < 5) return "text-rose-500"
-    if (val < 15) return "text-amber-500"
-    return "text-emerald-500"
-  }
-
-  const getConversionBg = (val: number) => {
-    if (val === 0) return "bg-muted/10 border-border"
-    if (val < 5) return "bg-rose-50 border-rose-100 dark:bg-rose-950/20 dark:border-rose-900/30"
-    if (val < 15) return "bg-amber-50 border-amber-100 dark:bg-amber-950/20 dark:border-amber-900/30"
-    return "bg-emerald-50 border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-900/30"
-  }
-
   return (
-    <div className="space-y-8">
-      {/* Dashboard Filters */}
-      <div className="flex flex-wrap items-center gap-3 bg-card p-4 rounded-xl border border-border shadow-sm">
-        <div className="flex items-center gap-2 text-muted-foreground mr-2">
-          <Filter className="w-4 h-4" />
-          <span className="text-xs font-bold uppercase tracking-wider opacity-70">Filters</span>
+    <div className="space-y-12 pb-20">
+      <div className="flex flex-wrap items-center gap-4 bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl p-6 rounded-[2.5rem] border border-white/20 dark:border-slate-800 shadow-2xl">
+        <div className="flex items-center gap-3 mr-6 px-2">
+          <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+            <Filter className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Intelligence</p>
+            <p className="text-xs font-bold text-slate-900 dark:text-white">Refinement Engine</p>
+          </div>
         </div>
 
-        <Select value={dateFilter} onValueChange={setDateFilter}>
-          <SelectTrigger className="w-36 h-9 bg-background border-none shadow-inner text-xs">
-            <Calendar className="w-3.5 h-3.5 mr-2 opacity-50" />
-            <SelectValue placeholder="Date" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Time</SelectItem>
-            <SelectItem value="today">Today</SelectItem>
-            <SelectItem value="7d">Last 7 Days</SelectItem>
-            <SelectItem value="30d">Last 30 Days</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex flex-wrap gap-4">
+          <Select value={dateFilter} onValueChange={setDateFilter}>
+            <SelectTrigger className="w-48 h-12 bg-white/50 dark:bg-slate-800/50 border-transparent rounded-2xl text-xs font-bold shadow-sm focus:ring-2 focus:ring-blue-500/20 px-6">
+              <Calendar className="w-4 h-4 mr-3 text-blue-500" />
+              <SelectValue placeholder="Chronology" />
+            </SelectTrigger>
+            <SelectContent className="rounded-2xl border-slate-200 dark:border-slate-800">
+              <SelectItem value="all" className="rounded-xl">All Echoes</SelectItem>
+              <SelectItem value="today" className="rounded-xl">Current Cycle</SelectItem>
+              <SelectItem value="7d" className="rounded-xl">7 Day Window</SelectItem>
+              <SelectItem value="30d" className="rounded-xl">30 Day Window</SelectItem>
+            </SelectContent>
+          </Select>
 
-        <Select value={sourceFilter} onValueChange={setSourceFilter}>
-          <SelectTrigger className="w-36 h-9 bg-background border-none shadow-inner text-xs">
-            <SelectValue placeholder="Source" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Sources</SelectItem>
-            {companySources.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
+          <Select value={sourceFilter} onValueChange={setSourceFilter}>
+            <SelectTrigger className="w-48 h-12 bg-white/50 dark:bg-slate-800/50 border-transparent rounded-2xl text-xs font-bold shadow-sm px-6">
+              <SelectValue placeholder="Origin Source" />
+            </SelectTrigger>
+            <SelectContent className="rounded-2xl border-slate-200 dark:border-slate-800 font-bold">
+              <SelectItem value="all" className="rounded-xl">Global Sources</SelectItem>
+              {companySources.map(s => <SelectItem key={s.id} value={s.name} className="rounded-xl">{s.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
 
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-36 h-9 bg-background border-none shadow-inner text-xs">
-            <SelectValue placeholder="Category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            {categories.filter(c => c.companyId === companyId).map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
-
-        <Select value={userFilter} onValueChange={setUserFilter}>
-          <SelectTrigger className="w-36 h-9 bg-background border-none shadow-inner text-xs">
-            <SelectValue placeholder="Agent" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Agents</SelectItem>
-            {companyUsers.map(u => <SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
-
-        {(dateFilter !== "all" || sourceFilter !== "all" || categoryFilter !== "all" || userFilter !== "all") && (
-          <Button variant="ghost" size="sm" onClick={() => { setDateFilter("all"); setSourceFilter("all"); setCategoryFilter("all"); setUserFilter("all"); }} className="h-9 px-3 text-muted-foreground hover:text-foreground text-xs">
-            Reset
-          </Button>
-        )}
+          {(dateFilter !== "all" || sourceFilter !== "all" || categoryFilter !== "all" || userFilter !== "all") && (
+            <Button
+              variant="ghost"
+              onClick={() => { setDateFilter("all"); setSourceFilter("all"); setCategoryFilter("all"); setUserFilter("all"); }}
+              className="h-12 px-8 text-rose-500 hover:text-white hover:bg-rose-500 font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all"
+            >
+              Reset Filters
+            </Button>
+          )}
+        </div>
       </div>
 
-
-
       <section>
-        <h2 className="text-xl font-semibold text-foreground mb-4">Activity Types</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {activityStats.map((stat) => (
+        <div className="flex items-center justify-between mb-8 px-2">
+          <div>
+            <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase">Activity Matrix</h2>
+            <p className="text-slate-500 font-medium text-sm mt-1">Real-time synchronized pipeline intelligence</p>
+          </div>
+          <Badge className="rounded-xl px-4 py-2 bg-blue-600/10 text-blue-600 border-none font-black uppercase tracking-widest text-[10px]">Active Node</Badge>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          {activityStats.map((stat, idx) => (
             <div
               key={stat.title}
-              onClick={() => onStatusClick && onStatusClick(stat.title === "Total Leads" ? "" : stat.title)}
-              className="rounded-xl p-5 transition-transform hover:scale-105 cursor-pointer"
+              onClick={() => onStatusClick && onStatusClick(stat.title === "Total Portfolio" ? "" : stat.title)}
+              className="group relative rounded-[2.5rem] p-10 transition-all duration-500 hover:-translate-y-2 active:scale-95 cursor-pointer overflow-hidden shadow-2xl"
               style={{ backgroundColor: stat.color }}
             >
-              <p className={cn("text-sm font-medium opacity-90", getTextColor(stat.color))}>{stat.title}</p>
-              <p className={cn("text-4xl font-bold mt-2", getTextColor(stat.color))}>{stat.count.toLocaleString()}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-[60px] -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
 
-      <section>
-        <h2 className="text-xl font-semibold text-foreground mb-4">Lead Categories</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {categoryStats.map((stat) => (
-            <div
-              key={stat.title}
-              className="bg-card rounded-xl p-5 border border-border hover:shadow-md transition-shadow cursor-default"
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: stat.color }} />
-                <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-              </div>
-              <p className="text-3xl font-bold text-foreground">{stat.count.toLocaleString()}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <h2 className="text-xl font-semibold text-foreground mb-4">Lead Sources</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {leadSources.map((source) => {
-            const Icon = source.icon
-            return (
-              <div key={source.name} className="bg-card rounded-xl p-5 border border-border hover:shadow-md transition-shadow cursor-default">
-                <div className="flex items-center gap-4">
-                  <div className={cn("w-12 h-12 rounded-lg flex items-center justify-center", source.color)}>
-                    <Icon className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-card-foreground">{source.name}</p>
-                    <p className="text-2xl font-bold text-card-foreground">{source.count.toLocaleString()}</p>
+              <div className="relative z-10 flex flex-col h-full">
+                <div className="flex items-center justify-between mb-6">
+                  <p className={cn("text-[10px] font-black uppercase tracking-[0.3em] opacity-60", getTextColor(stat.color))}>{stat.title}</p>
+                  <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center bg-white/10 backdrop-blur-md", getTextColor(stat.color))}>
+                    <TrendingUp className="w-4 h-4" />
                   </div>
                 </div>
+                <p className={cn("text-6xl font-black tracking-tighter", getTextColor(stat.color))}>{stat.count.toLocaleString()}</p>
+                <div className={cn("mt-auto pt-8 flex items-center gap-3 text-[10px] font-black uppercase tracking-widest opacity-60", getTextColor(stat.color))}>
+                  <div className="w-full h-1 bg-current opacity-20 rounded-full" />
+                  <span>Inspect</span>
+                </div>
               </div>
-            )
-          })}
+            </div>
+          ))}
         </div>
       </section>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-12">
+        <section className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl rounded-[3rem] p-10 border border-white/20 dark:border-slate-800 shadow-2xl">
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-8 tracking-tight uppercase flex items-center gap-4">
+            <div className="w-2 h-8 bg-blue-600 rounded-full" />
+            Lead Classifications
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {categoryStats.map((stat) => (
+              <div key={stat.title} className="group bg-white dark:bg-slate-950 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 hover:border-blue-500/30 transition-all shadow-sm">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 group-hover:bg-blue-600 transition-colors">
+                    <div className="w-4 h-4 rounded-full group-hover:bg-white" style={{ backgroundColor: stat.color }} />
+                  </div>
+                  <p className="text-sm font-black text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-all uppercase tracking-widest leading-none">{stat.title}</p>
+                </div>
+                <p className="text-4xl font-black text-slate-900 dark:text-white font-mono">{stat.count.toLocaleString()}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl rounded-[3rem] p-10 border border-white/20 dark:border-slate-800 shadow-2xl flex flex-col">
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-8 tracking-tight uppercase flex items-center gap-4">
+            <div className="w-2 h-8 bg-cyan-500 rounded-full" />
+            Lead Generation Network
+          </h2>
+          <div className="space-y-6 flex-1">
+            {leadSources.slice(0, 5).map((source) => {
+              const Icon = source.icon
+              const totalLeads = companyLeads.length
+              const percentage = totalLeads > 0 ? (source.count / totalLeads) * 100 : 0
+              return (
+                <div key={source.name} className="space-y-3 group">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-slate-900 text-white shadow-xl group-hover:rotate-6 transition-transform">
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <span className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">{source.name}</span>
+                    </div>
+                    <div className="text-right flex items-baseline gap-2">
+                      <span className="text-lg font-black font-mono text-slate-900 dark:text-white">{source.count}</span>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase">{percentage.toFixed(0)}%</span>
+                    </div>
+                  </div>
+                  <div className="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-[2px]">
+                    <div className="h-full bg-blue-600 rounded-full shadow-lg transition-all duration-1000" style={{ width: `${percentage}%` }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      </div>
     </div>
   )
 }
@@ -1281,34 +1131,43 @@ function SidebarConversionWidget({ companyId }: { companyId: number }) {
   }
 
   return (
-    <div className="px-4 pb-6 mt-auto shrink-0">
-      <div className={cn("rounded-xl p-4 border border-sidebar-border transition-all hover:bg-sidebar-accent/50 group flex flex-col gap-2", getConversionBg(conversionValue))}>
-        <div className="flex items-center justify-between">
-          <div className="p-1.5 rounded-lg bg-sidebar-primary/10">
-            <TrendingUp className={cn("w-4 h-4", getConversionColor(conversionValue))} />
+    <div className="px-2 mt-auto shrink-0">
+      <div className={cn("rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-lg transition-all hover:bg-white dark:hover:bg-slate-800/80 group flex flex-col gap-4 relative overflow-hidden bg-white/40 dark:bg-slate-900/40 backdrop-blur-md", getConversionBg(conversionValue))}>
+        {/* Dynamic Sparkle/Light Effect */}
+        <div className={cn("absolute -top-10 -right-10 w-24 h-24 blur-3xl opacity-20 bg-current rounded-full", getConversionColor(conversionValue))} />
+
+        <div className="flex items-center justify-between relative z-10">
+          <div className={cn("p-2 rounded-xl bg-white dark:bg-slate-900 border shadow-sm", getConversionBg(conversionValue))}>
+            <TrendingUp className={cn("w-5 h-5", getConversionColor(conversionValue))} />
           </div>
-          <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-wider bg-background/50 border-sidebar-border h-5 shadow-sm">
-            % Efficiency
+          <Badge variant="outline" className="text-[10px] font-black uppercase tracking-widest bg-white/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 h-6 shadow-sm px-2">
+            Efficiency
           </Badge>
         </div>
-        <div>
-          <div className="flex items-baseline gap-1 mt-0.5">
-            <span className={cn("text-2xl font-black tracking-tight", getConversionColor(conversionValue))}>
+
+        <div className="relative z-10">
+          <div className="flex items-baseline gap-1">
+            <span className={cn("text-4xl font-black tracking-tighter drop-shadow-sm", getConversionColor(conversionValue))}>
               {conversionRate}%
             </span>
           </div>
-          <div className="mt-2 space-y-1.5">
-            <div className="h-1.5 w-full bg-sidebar-accent rounded-full overflow-hidden shadow-inner">
+          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1 opacity-70">Overall Conversion</p>
+
+          <div className="mt-5 space-y-2.5">
+            <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-800/50 rounded-full overflow-hidden shadow-inner p-[1px]">
               <div
-                className={cn("h-full transition-all duration-1000",
-                  conversionValue < 5 ? "bg-rose-500" : conversionValue < 15 ? "bg-amber-500" : "bg-emerald-500"
+                className={cn("h-full rounded-full transition-all duration-1000 shadow-lg",
+                  conversionValue < 5 ? "bg-rose-500 shadow-rose-500/50" : conversionValue < 15 ? "bg-amber-500 shadow-amber-500/50" : "bg-emerald-500 shadow-emerald-500/50"
                 )}
                 style={{ width: `${Math.min(conversionValue, 100)}%` }}
               />
             </div>
-            <div className="flex justify-between items-center text-[8px] text-sidebar-foreground/50 font-bold uppercase tracking-tighter opacity-80">
-              <span>{bookedCount} Booked</span>
-              <span>{totalLeads} Total</span>
+            <div className="flex justify-between items-center text-[9px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-tighter opacity-80">
+              <span className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                {bookedCount} Booked
+              </span>
+              <span>{totalLeads} Total Leads</span>
             </div>
           </div>
         </div>
@@ -1324,7 +1183,7 @@ function SidebarConversionWidget({ companyId }: { companyId: number }) {
 // ADD LEAD MODAL
 // ============================================
 function AddLeadModal({ open, onOpenChange, companyId, userName }: { open: boolean; onOpenChange: (open: boolean) => void; companyId: number; userName: string }) {
-  const { leads, categories, sources, activityTypes, addLead } = useData()
+  const { leads, categories, sources, activityTypes, addLead, bulkAddLeads } = useData()
   const [fullName, setFullName] = useState("")
   const [mobile, setMobile] = useState("")
   const [whatsapp, setWhatsapp] = useState("")
@@ -1334,9 +1193,11 @@ function AddLeadModal({ open, onOpenChange, companyId, userName }: { open: boole
   const [category, setCategory] = useState("")
   const [status, setStatus] = useState("")
   const [remarks, setRemarks] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async () => {
     if (fullName && mobile) {
+      setIsSubmitting(true)
       const success = await addLead({
         companyId: companyId,
         fullName,
@@ -1357,6 +1218,7 @@ function AddLeadModal({ open, onOpenChange, companyId, userName }: { open: boole
         assignedAgent: "",
       })
 
+      setIsSubmitting(false)
       if (success) {
         // Reset form
         setFullName("")
@@ -1379,14 +1241,13 @@ function AddLeadModal({ open, onOpenChange, companyId, userName }: { open: boole
     if (!file) return
 
     const reader = new FileReader()
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const text = event.target?.result as string
         const lines = text.split("\n")
         const headers = lines[0].split(",").map(h => h.trim())
 
-        const newLeads: Lead[] = []
-        let lastId = Math.max(...leads.map(l => l.id), 0)
+        const newLeads: Omit<Lead, "id" | "createdAt" | "updatedAt">[] = []
 
         for (let i = 1; i < lines.length; i++) {
           if (!lines[i].trim()) continue
@@ -1397,9 +1258,7 @@ function AddLeadModal({ open, onOpenChange, companyId, userName }: { open: boole
           })
 
           if (leadData["Full Name"] && leadData["Mobile"]) {
-            lastId++
             newLeads.push({
-              id: lastId,
               companyId: companyId,
               fullName: leadData["Full Name"],
               mobile: leadData["Mobile"],
@@ -1417,19 +1276,20 @@ function AddLeadModal({ open, onOpenChange, companyId, userName }: { open: boole
                 author: userName
               }] : [],
               assignedAgent: "",
-              createdAt: new Date().toISOString().split("T")[0],
             })
           }
         }
 
         if (newLeads.length > 0) {
-          alert("Bulk upload is temporarily disabled while we upgrade the database security.")
-          onOpenChange(false)
+          setIsSubmitting(true)
+          const success = await bulkAddLeads(newLeads)
+          setIsSubmitting(false)
+          if (success) onOpenChange(false)
         } else {
-          alert("No valid leads found in the file. Please check the template.")
+          toast.error("No valid leads found in the file.")
         }
       } catch (err) {
-        alert("Failed to parse the file. Please ensure it follows the CSV template.")
+        toast.error("Failed to parse the file. Please check the template.")
       }
     }
     reader.readAsText(file)
@@ -1454,164 +1314,185 @@ function AddLeadModal({ open, onOpenChange, companyId, userName }: { open: boole
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[95vh] w-[calc(100%-2rem)] md:w-full overflow-y-auto p-4 md:p-6">
-        <DialogHeader>
-          <DialogTitle className="text-xl">Add Leads</DialogTitle>
-        </DialogHeader>
-
-        <Tabs defaultValue="single" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-muted">
-            <TabsTrigger value="single">Single Entry</TabsTrigger>
-            <TabsTrigger value="bulk">Bulk Upload (Excel/CSV)</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="single" className="mt-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name *</Label>
-                <Input id="fullName" placeholder="Enter full name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+      <DialogContent className="max-w-2xl max-h-[95vh] w-[calc(100%-2rem)] md:w-full overflow-y-auto p-0 border-none bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl overflow-hidden">
+        <div className="h-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 w-full" />
+        <div className="p-6 md:p-10">
+          <DialogHeader className="mb-8">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-blue-600/10 rounded-2xl border border-blue-500/20">
+                <UserPlus className="w-6 h-6 text-blue-600" />
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="mobile">Mobile Number *</Label>
-                <Input id="mobile" placeholder="Enter mobile number" type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="whatsapp">WhatsApp Number</Label>
-                <Input id="whatsapp" placeholder="Enter WhatsApp number" type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input id="location" placeholder="Enter location" value={location} onChange={(e) => setLocation(e.target.value)} />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="flatConfig">Flat Configuration</Label>
-                <Select value={flatConfig} onValueChange={setFlatConfig}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select configuration" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1 BHK">1 BHK</SelectItem>
-                    <SelectItem value="2 BHK">2 BHK</SelectItem>
-                    <SelectItem value="3 BHK">3 BHK</SelectItem>
-                    <SelectItem value="4 BHK">4 BHK</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="source">Leads Source</Label>
-                <Select value={source} onValueChange={setSource}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select source" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sources.filter(s => s.companyId === companyId).map((s) => (
-                      <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="category">Leads Category</Label>
-                <Select
-                  value={status === "Booked" ? "Converted" : category}
-                  onValueChange={setCategory}
-                  disabled={status === "Booked"}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.filter(c => c.companyId === companyId).map((c) => (
-                      <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="status">Lead Status</Label>
-                <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {activityTypes.filter(at => at.companyId === companyId).map((at) => (
-                      <SelectItem key={at.id} value={at.name}>{at.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {status === "Booked" && (
-                  <p className="text-[10px] text-emerald-600 font-medium mt-1">Note: Status "Booked" will automatically set category to "Converted".</p>
-                )}
+              <div>
+                <DialogTitle className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Add New Leads</DialogTitle>
+                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">Scale your business with new opportunities</p>
               </div>
             </div>
+          </DialogHeader>
 
-            <div className="space-y-2 mt-4">
-              <Label htmlFor="remarks">Remarks</Label>
-              <Textarea id="remarks" placeholder="Enter any initial remarks" value={remarks} onChange={(e) => setRemarks(e.target.value)} />
-            </div>
+          <Tabs defaultValue="single" className="w-full">
+            <TabsList className="grid w-80 grid-cols-2 p-1 bg-slate-100 dark:bg-slate-800/50 rounded-2xl mb-8">
+              <TabsTrigger value="single" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm transition-all font-bold text-xs py-2">Single Entry</TabsTrigger>
+              <TabsTrigger value="bulk" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm transition-all font-bold text-xs py-2">Bulk Upload</TabsTrigger>
+            </TabsList>
 
-            <DialogFooter className="mt-6">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button onClick={handleSubmit} disabled={!fullName || !mobile}>Add Lead</Button>
-            </DialogFooter>
-          </TabsContent>
+            <TabsContent value="single" className="mt-0 animate-in fade-in slide-in-from-right-4 duration-500">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="fullName" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Full Name *</Label>
+                  <div className="relative group">
+                    <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                    <Input id="fullName" placeholder="Rahul Sharma" value={fullName} onChange={(e) => setFullName(e.target.value)} className="h-12 pl-12 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-transparent focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium" />
+                  </div>
+                </div>
 
-          <TabsContent value="bulk" className="mt-4">
-            <div className="flex flex-col items-center justify-center space-y-6 py-8 border-2 border-dashed border-border rounded-xl bg-muted/30">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <FileSpreadsheet className="w-8 h-8 text-primary" />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="mobile" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Mobile Number *</Label>
+                  <div className="relative group">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                    <Input id="mobile" placeholder="+91 98XXX XXXXX" type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} className="h-12 pl-12 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-transparent focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium" />
+                  </div>
+                </div>
 
-              <div className="text-center space-y-2">
-                <h4 className="font-semibold text-lg">Bulk Upload Leads</h4>
-                <p className="text-sm text-muted-foreground max-w-sm">
-                  Upload multiple leads at once using our template.
-                  Ensure the columns match the template exactly.
-                </p>
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="whatsapp" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">WhatsApp Number</Label>
+                  <div className="relative group">
+                    <MessageSquare className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                    <Input id="whatsapp" placeholder="Optional" type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} className="h-12 pl-12 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-transparent focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium" />
+                  </div>
+                </div>
 
-              <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md px-6">
-                <Button variant="outline" className="flex-1 gap-2" onClick={downloadTemplate}>
-                  <Download className="w-4 h-4" />
-                  Download Template
-                </Button>
+                <div className="space-y-2">
+                  <Label htmlFor="location" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Location</Label>
+                  <div className="relative group">
+                    <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                    <Input id="location" placeholder="City / Area" value={location} onChange={(e) => setLocation(e.target.value)} className="h-12 pl-12 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-transparent focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium" />
+                  </div>
+                </div>
 
-                <div className="relative flex-1">
-                  <input
-                    type="file"
-                    accept=".csv"
-                    onChange={handleBulkUpload}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                <div className="space-y-2">
+                  <Label htmlFor="flatConfig" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Configuration</Label>
+                  <Select value={flatConfig} onValueChange={setFlatConfig}>
+                    <SelectTrigger className="h-12 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-transparent focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium">
+                      <SelectValue placeholder="Select space" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl border-slate-200 dark:border-slate-800 shadow-xl">
+                      <SelectItem value="1 BHK" className="rounded-xl my-0.5">1 BHK</SelectItem>
+                      <SelectItem value="2 BHK" className="rounded-xl my-0.5">2 BHK</SelectItem>
+                      <SelectItem value="3 BHK" className="rounded-xl my-0.5">3 BHK</SelectItem>
+                      <SelectItem value="4 BHK" className="rounded-xl my-0.5">4 BHK</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="source" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Source</Label>
+                  <Select value={source} onValueChange={setSource}>
+                    <SelectTrigger className="h-12 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-transparent focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium">
+                      <SelectValue placeholder="Tracking source" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl border-slate-200 dark:border-slate-800 shadow-xl">
+                      {sources.map((s) => (
+                        <SelectItem key={s.id} value={s.name} className="rounded-xl my-0.5">{s.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="status" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Initial Status</Label>
+                  <Select value={status} onValueChange={setStatus}>
+                    <SelectTrigger className="h-12 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-transparent focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium">
+                      <SelectValue placeholder="Interested" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl border-slate-200 dark:border-slate-800 shadow-xl">
+                      {activityTypes.map((a) => (
+                        <SelectItem key={a.id} value={a.name} className="rounded-xl my-0.5">{a.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="category" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Project Category</Label>
+                  <Select value={category} onValueChange={setCategory}>
+                    <SelectTrigger className="h-12 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-transparent focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium">
+                      <SelectValue placeholder="Hot / Warm / Cold" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl border-slate-200 dark:border-slate-800 shadow-xl">
+                      {categories.map((c) => (
+                        <SelectItem key={c.id} value={c.name} className="rounded-xl my-0.5">{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2 md:col-span-2 mt-2">
+                  <Label htmlFor="remarks" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Initial Discovery Remarks</Label>
+                  <Textarea
+                    id="remarks"
+                    placeholder="Enter first interaction details, preferences, and timeline..."
+                    value={remarks}
+                    onChange={(e) => setRemarks(e.target.value)}
+                    className="min-h-[120px] rounded-3xl bg-slate-50 dark:bg-slate-800/50 border-transparent focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium p-6 resize-none"
                   />
-                  <Button className="w-full gap-2">
-                    <Upload className="w-4 h-4" />
-                    Upload File
-                  </Button>
                 </div>
               </div>
 
-              <div className="text-xs text-muted-foreground bg-background p-3 rounded-lg border border-border">
-                <p className="font-semibold mb-1">Tips for a good experience:</p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Use the CSV template for best results</li>
-                  <li>Full Name and Mobile are mandatory</li>
-                  <li>Dates and Company ID are handled automatically</li>
-                </ul>
+              <div className="flex justify-end gap-4 mt-10">
+                <Button variant="ghost" onClick={() => onOpenChange(false)} className="h-14 px-8 rounded-2xl font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">Cancel</Button>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={!fullName || !mobile || isSubmitting}
+                  className="h-14 px-12 rounded-2xl font-black bg-blue-600 hover:bg-blue-500 text-white shadow-xl shadow-blue-500/25 transition-all active:scale-[0.98] disabled:opacity-50"
+                >
+                  {isSubmitting ? "Saving..." : "Create Lead"}
+                </Button>
               </div>
-            </div>
+            </TabsContent>
 
-            <DialogFooter className="mt-6">
-              <Button variant="outline" className="w-full" onClick={() => onOpenChange(false)}>Close</Button>
-            </DialogFooter>
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="bulk" className="mt-0 animate-in fade-in slide-in-from-left-4 duration-500">
+              <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[3rem] py-16 px-8 text-center bg-slate-50/30 dark:bg-slate-800/10 transition-all hover:bg-slate-50/50 dark:hover:bg-slate-800/20 group relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-3xl rounded-full" />
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-500/5 blur-3xl rounded-full" />
+
+                <div className="w-24 h-24 bg-white dark:bg-slate-900 rounded-[2rem] flex items-center justify-center mb-6 shadow-2xl border border-slate-100 dark:border-slate-800 group-hover:scale-110 transition-transform duration-500">
+                  <FileSpreadsheet className="w-10 h-10 text-blue-600" />
+                </div>
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white">Import Intelligence</h3>
+                <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-sm font-medium leading-relaxed">
+                  Bulk import leads from your marketing campaigns. Supports CSV and Excel formats.
+                </p>
+
+                <div className="mt-12 flex flex-col sm:flex-row gap-4 w-full justify-center px-4 relative z-10">
+                  <Button variant="outline" onClick={downloadTemplate} className="h-14 rounded-2xl border-slate-200 dark:border-slate-800 font-bold bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-all px-8">
+                    <Download className="w-5 h-5 mr-3 text-blue-600" />
+                    Download Schema
+                  </Button>
+
+                  <div className="relative">
+                    <Input
+                      type="file"
+                      accept=".csv"
+                      onChange={handleBulkUpload}
+                      disabled={isSubmitting}
+                      className="absolute inset-0 opacity-0 cursor-pointer h-14 w-full z-10"
+                    />
+                    <Button className="h-14 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black px-10 shadow-xl transition-all hover:scale-[1.02] active:scale-100 disabled:opacity-50">
+                      <Upload className="w-5 h-5 mr-3" />
+                      {isSubmitting ? "Uploading..." : "Import Data"}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="mt-10 flex items-center gap-6 text-[10px] text-slate-400 font-black uppercase tracking-widest opacity-60">
+                  <span className="flex items-center gap-2"><div className="w-1 h-1 rounded-full bg-blue-500" /> Auto-detection</span>
+                  <span className="flex items-center gap-2"><div className="w-1 h-1 rounded-full bg-blue-500" /> Real-time Sync</span>
+                  <span className="flex items-center gap-2"><div className="w-1 h-1 rounded-full bg-blue-500" /> Data Isolation</span>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
       </DialogContent>
     </Dialog>
   )
@@ -1753,202 +1634,305 @@ function LeadsCenterView({
         )}
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          {companyLeads.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <UserX className="w-12 h-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No leads yet. Add your first lead!</p>
+      <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden transition-all duration-500">
+        {!companyLeads.length ? (
+          <div className="flex flex-col items-center justify-center py-32 px-10 text-center">
+            <div className="w-24 h-24 bg-slate-100 dark:bg-slate-800 rounded-[2.5rem] flex items-center justify-center mb-8 border border-slate-200 dark:border-slate-700/50 shadow-inner">
+              <UserX className="w-10 h-10 text-slate-400" />
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Mobile</TableHead>
-                    <TableHead>Source</TableHead>
-                    <TableHead className="hidden md:table-cell">Category</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="hidden xl:table-cell">Created</TableHead>
-                    <TableHead className="hidden lg:table-cell">Recent Remark</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {companyLeads.map((lead) => (
-                    <TableRow key={lead.id}>
-                      <TableCell className="font-medium">{lead.fullName}</TableCell>
-                      <TableCell>{lead.mobile}</TableCell>
-                      <TableCell>{lead.source || "-"}</TableCell>
-                      <TableCell className="hidden md:table-cell">{lead.category || "-"}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{lead.status}</Badge>
-                      </TableCell>
-                      <TableCell className="hidden xl:table-cell">{lead.createdAt}</TableCell>
-                      <TableCell className="hidden lg:table-cell max-w-[200px] truncate">
-                        {lead.remarks || "-"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => setFollowupLead(lead)} title="Followup History" className="text-primary hover:text-primary hover:bg-primary/10">
-                            <MessageSquareQuote className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => setEditLead(lead)} title="Edit Lead">
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDeleteLead(lead.id)} title="Delete Lead" className="text-destructive hover:text-destructive">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">No Leads Discovered</h3>
+            <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-sm font-medium leading-relaxed">Your pipeline is currently empty. Start adding new leads to see them here.</p>
+            <Button onClick={() => (window as any).dispatchAddLead()} className="mt-8 h-12 px-8 rounded-2xl bg-blue-600 hover:bg-blue-500 font-bold shadow-lg shadow-blue-500/20">
+              Create First Lead
+            </Button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto scrollbar-hide">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-slate-100 dark:border-slate-800 hover:bg-transparent px-6">
+                  <TableHead className="py-6 px-8 text-[11px] font-black uppercase tracking-widest text-slate-400">Client Identity</TableHead>
+                  <TableHead className="py-6 text-[11px] font-black uppercase tracking-widest text-slate-400">Contact Path</TableHead>
+                  <TableHead className="py-6 text-[11px] font-black uppercase tracking-widest text-slate-400">Origin / Source</TableHead>
+                  <TableHead className="py-6 hidden md:table-cell text-[11px] font-black uppercase tracking-widest text-slate-400">Classification</TableHead>
+                  <TableHead className="py-6 text-[11px] font-black uppercase tracking-widest text-slate-400">Current Phase</TableHead>
+                  <TableHead className="py-6 hidden lg:table-cell text-[11px] font-black uppercase tracking-widest text-slate-400">Latent Remark</TableHead>
+                  <TableHead className="py-6 text-right px-8 text-[11px] font-black uppercase tracking-widest text-slate-400">Control</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {companyLeads.map((lead) => (
+                  <TableRow key={lead.id} className="group border-slate-100 dark:border-slate-800 hover:bg-blue-50/30 dark:hover:bg-blue-500/5 transition-colors cursor-default px-6">
+                    <TableCell className="py-5 px-8">
+                      <div className="flex flex-col">
+                        <span className="text-base font-black text-slate-900 dark:text-white tracking-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{lead.fullName}</span>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{new Date(lead.createdAt).toLocaleDateString()}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-5">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
+                          <Phone className="w-3 h-3 opacity-50" />
+                          {lead.mobile}
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                        {lead.whatsapp && (
+                          <div className="flex items-center gap-2 text-[10px] font-bold text-emerald-500">
+                            <MessageSquare className="w-3 h-3" />
+                            Active WhatsApp
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-5">
+                      <Badge variant="outline" className="h-7 px-3 rounded-full border-slate-200 dark:border-slate-800 font-bold text-[10px] uppercase bg-white dark:bg-slate-900 shadow-sm">
+                        {lead.source || "None"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-5 hidden md:table-cell">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-2 h-2 rounded-full shadow-sm shadow-current"
+                          style={{ backgroundColor: categories.find(c => c.name === lead.category)?.color || "#cbd5e1" }}
+                        />
+                        <span className="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">{lead.category || "General"}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-5">
+                      <div className={cn(
+                        "inline-flex items-center px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-sm",
+                        lead.status === "Booked" ? "bg-emerald-500 text-white shadow-emerald-500/20" :
+                          lead.status === "Not Interested" ? "bg-rose-500 text-white shadow-rose-500/20" :
+                            "bg-blue-600 text-white shadow-blue-500/20"
+                      )}>
+                        {lead.status}
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-5 hidden lg:table-cell max-w-[240px]">
+                      <div className="flex flex-col gap-1">
+                        <p className="text-xs text-slate-600 dark:text-slate-400 font-medium line-clamp-2 italic leading-relaxed">
+                          "{lead.remarks || "No interaction recorded yet."}"
+                        </p>
+                        <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest">{new Date(lead.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Update</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-5 text-right px-8">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setFollowupLead(lead)}
+                          className="w-10 h-10 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-600 text-slate-400 transition-all border border-transparent hover:border-blue-500/20"
+                        >
+                          <History className="w-4.5 h-4.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setEditLead(lead)}
+                          className="w-10 h-10 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-400 transition-all"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteLead(lead.id)}
+                          className="w-10 h-10 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 text-slate-400 transition-all"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
 
       {/* Edit Lead Modal */}
       <Dialog open={!!editLead} onOpenChange={(open) => !open && setEditLead(null)}>
-        <DialogContent className="max-w-2xl max-h-[95vh] w-[calc(100%-2rem)] md:w-full overflow-y-auto p-4 md:p-6">
-          <DialogHeader>
-            <DialogTitle>Edit Lead</DialogTitle>
-          </DialogHeader>
-          {editLead && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
-              <div className="space-y-2">
-                <Label>Full Name</Label>
-                <Input value={editLead.fullName} onChange={(e) => setEditLead({ ...editLead, fullName: e.target.value })} />
+        <DialogContent className="max-w-2xl max-h-[95vh] w-[calc(100%-2rem)] md:w-full overflow-y-auto p-0 border-none bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl overflow-hidden">
+          <div className="h-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 w-full" />
+          <div className="p-6 md:p-10">
+            <DialogHeader className="mb-8">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-blue-600/10 rounded-2xl border border-blue-500/20">
+                  <Pencil className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <DialogTitle className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Refine Lead Details</DialogTitle>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">Keep your database accurate and up to date</p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Mobile</Label>
-                <Input value={editLead.mobile} onChange={(e) => setEditLead({ ...editLead, mobile: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>Source</Label>
-                <Select value={editLead.source} onValueChange={(v) => setEditLead({ ...editLead, source: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {companySources.map((s) => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Category</Label>
-                <Select
-                  value={editLead.status === "Booked" ? "Converted" : editLead.category}
-                  onValueChange={(v) => setEditLead({ ...editLead, category: v })}
-                  disabled={editLead.status === "Booked"}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {companyCategories.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select value={editLead.status} onValueChange={(v) => setEditLead({ ...editLead, status: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {companyActivityTypes.map((at) => <SelectItem key={at.id} value={at.name}>{at.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                {editLead.status === "Booked" && (
-                  <p className="text-[10px] text-emerald-600 font-medium mt-1 italic">Force-synced to "Converted" Category</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label>Location</Label>
-                <Input value={editLead.location} onChange={(e) => setEditLead({ ...editLead, location: e.target.value })} />
-              </div>
+            </DialogHeader>
 
-              <div className="space-y-2 sm:col-span-2">
-                <Label>Add New Remark</Label>
-                <Textarea
-                  placeholder="Type new remark here..."
-                  value={newRemark}
-                  onChange={(e) => setNewRemark(e.target.value)}
-                />
+            {editLead && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Full Identity</Label>
+                  <Input value={editLead.fullName} onChange={(e) => setEditLead({ ...editLead, fullName: e.target.value })} className="h-12 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-transparent focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium py-6" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Contact Path</Label>
+                  <Input value={editLead.mobile} onChange={(e) => setEditLead({ ...editLead, mobile: e.target.value })} className="h-12 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-transparent focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium py-6" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Origin Source</Label>
+                  <Select value={editLead.source} onValueChange={(v) => setEditLead({ ...editLead, source: v })}>
+                    <SelectTrigger className="h-12 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-transparent focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium py-6">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl border-slate-200 dark:border-slate-800 shadow-xl">
+                      {companySources.map((s) => <SelectItem key={s.id} value={s.name} className="rounded-xl my-0.5">{s.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Current Classification</Label>
+                  <Select
+                    value={editLead.status === "Booked" ? "Converted" : editLead.category}
+                    onValueChange={(v) => setEditLead({ ...editLead, category: v })}
+                    disabled={editLead.status === "Booked"}
+                  >
+                    <SelectTrigger className="h-12 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-transparent focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium py-6">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl border-slate-200 dark:border-slate-800 shadow-xl">
+                      {companyCategories.map((c) => <SelectItem key={c.id} value={c.name} className="rounded-xl my-0.5">{c.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Sales Progression</Label>
+                  <Select value={editLead.status} onValueChange={(v) => setEditLead({ ...editLead, status: v })}>
+                    <SelectTrigger className="h-12 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-transparent focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium py-6">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl border-slate-200 dark:border-slate-800 shadow-xl">
+                      {companyActivityTypes.map((at) => <SelectItem key={at.id} value={at.name} className="rounded-xl my-0.5">{at.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  {editLead.status === "Booked" && (
+                    <p className="text-[10px] text-emerald-600 font-bold mt-1.5 px-1 uppercase tracking-widest flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Force-synced to "Converted"</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Geographic Interest</Label>
+                  <Input value={editLead.location} onChange={(e) => setEditLead({ ...editLead, location: e.target.value })} className="h-12 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-transparent focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium py-6" />
+                </div>
+
+                <div className="space-y-2 md:col-span-2 mt-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Append Knowledge / Remarks</Label>
+                  <Textarea
+                    placeholder="Capture new insights from latest interaction..."
+                    value={newRemark}
+                    onChange={(e) => setNewRemark(e.target.value)}
+                    className="min-h-[120px] rounded-3xl bg-slate-50 dark:bg-slate-800/50 border-transparent focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium p-6 resize-none"
+                  />
+                </div>
               </div>
+            )}
+
+            <div className="flex justify-end gap-4 mt-10">
+              <Button variant="ghost" onClick={() => setEditLead(null)} className="h-14 px-8 rounded-2xl font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">Cancel</Button>
+              <Button
+                onClick={handleEditSave}
+                className="h-14 px-12 rounded-2xl font-black bg-blue-600 hover:bg-blue-500 text-white shadow-xl shadow-blue-500/25 transition-all active:scale-[0.98]"
+              >
+                Apply Changes
+              </Button>
             </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditLead(null)}>Cancel</Button>
-            <Button onClick={handleEditSave}>Save Changes</Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Premium Followup & Remark History Box */}
       <Dialog open={!!followupLead} onOpenChange={(open) => !open && setFollowupLead(null)}>
-        <DialogContent className="max-w-4xl max-h-[95vh] w-[calc(100%-2rem)] md:w-full overflow-y-auto md:overflow-hidden flex flex-col p-0 border-none shadow-2xl">
+        <DialogContent className="max-w-5xl max-h-[95vh] w-[calc(100%-2rem)] md:w-full overflow-hidden flex flex-col p-0 border-none bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-[3rem] shadow-2xl">
           {followupLead && (
-            <>
-              <DialogHeader className="p-4 md:p-6 bg-primary/5 border-b border-primary/10 shrink-0">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <History className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+            <div className="flex flex-col h-full overflow-hidden">
+              {/* Unified Professional Header */}
+              <div className="p-8 md:p-10 bg-slate-50/50 dark:bg-slate-800/30 border-b border-slate-200 dark:border-slate-800 relative">
+                <div className="absolute top-0 right-0 w-64 h-full bg-blue-500/5 blur-3xl rounded-full" />
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 rounded-[1.5rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl flex items-center justify-center">
+                      <History className="w-8 h-8 text-blue-600" />
                     </div>
                     <div>
-                      <DialogTitle className="text-lg md:text-xl font-bold">{followupLead.fullName}</DialogTitle>
-                      <p className="text-xs md:text-sm text-muted-foreground">Followup History & Timeline</p>
+                      <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{followupLead.fullName}</h2>
+                      <div className="flex items-center gap-3 mt-1">
+                        <Badge className="bg-blue-600/10 text-blue-600 border-none rounded-lg px-2 py-0.5 text-[10px] font-black uppercase tracking-widest">{followupLead.status}</Badge>
+                        <span className="text-xs font-bold text-slate-400 border-l border-slate-300 dark:border-slate-700 pl-3 flex items-center gap-2">
+                          <Phone className="w-3 h-3" />
+                          {followupLead.mobile}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center sm:flex-col sm:items-end gap-2 shrink-0">
-                    <Badge variant="outline" className="bg-background">{followupLead.status}</Badge>
-                    <span className="text-[10px] text-muted-foreground">{followupLead.mobile}</span>
+
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" className="h-12 rounded-2xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 font-bold px-6 shadow-sm">
+                      <Mail className="w-4 h-4 mr-2" /> Email
+                    </Button>
+                    <Button className="h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black px-6 shadow-lg shadow-emerald-500/20">
+                      <MessageSquare className="w-4 h-4 mr-2" /> WhatsApp
+                    </Button>
                   </div>
                 </div>
-              </DialogHeader>
+              </div>
 
-              <div className="flex-1 overflow-y-auto md:overflow-hidden grid grid-cols-1 md:grid-cols-5">
-                {/* Left Side: History Timeline */}
-                <div className="md:col-span-3 border-b md:border-b-0 md:border-r border-border bg-muted/20 overflow-y-auto p-4 md:p-6 space-y-6">
-                  <h3 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground uppercase tracking-wider">
-                    <History className="w-4 h-4" />
-                    Timeline
-                  </h3>
+              <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
+                {/* Narrative Timeline */}
+                <div className="flex-1 overflow-y-auto p-8 md:p-10 space-y-10 scrollbar-hide">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Interaction Narrative</h3>
+                    <Badge variant="outline" className="rounded-full px-4 py-1 text-[10px] font-black uppercase text-slate-400 border-slate-200 dark:border-slate-800">{followupLead.remarksHistory?.length || 0} Events Recorded</Badge>
+                  </div>
 
-                  <div className="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-primary/20 before:via-border before:to-transparent">
+                  <div className="relative pl-8 space-y-10 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[2px] before:bg-gradient-to-b before:from-blue-600/50 before:via-slate-200 dark:before:via-slate-800 before:to-transparent">
                     {followupLead.remarksHistory?.length ? (
                       followupLead.remarksHistory.map((remark, idx) => (
-                        <div key={remark.id} className="relative flex items-start pl-12 group">
+                        <div key={remark.id} className="relative group">
                           <div className={cn(
-                            "absolute left-3 w-4 h-4 rounded-full border-2 border-background shadow-sm z-10 transition-transform group-hover:scale-125",
-                            idx === 0 ? "bg-primary" : "bg-muted-foreground"
+                            "absolute -left-9.5 top-1.5 w-3 h-3 rounded-full border-[3px] border-white dark:border-slate-900 z-10 transition-all group-hover:scale-150 shadow-sm",
+                            idx === 0 ? "bg-blue-600" : "bg-slate-300 dark:bg-slate-700"
                           )} />
-                          <div className="flex-1 space-y-1">
+
+                          <div className="flex flex-col gap-2">
                             <div className="flex items-center justify-between">
-                              <span className="text-xs font-bold text-primary">{remark.author}</span>
-                              <span className="text-[10px] text-muted-foreground">{new Date(remark.date).toLocaleString()}</span>
+                              <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">{remark.author}</span>
+                              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{new Date(remark.date).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span>
                             </div>
-                            <div className="bg-background p-3 rounded-lg border border-border/60 shadow-sm group-hover:border-primary/30 transition-colors">
-                              <p className="text-sm whitespace-pre-wrap leading-relaxed">{remark.text}</p>
+                            <div className="bg-white dark:bg-slate-800/50 p-6 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 shadow-sm group-hover:shadow-md transition-all group-hover:border-blue-500/20">
+                              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed font-medium">{remark.text}</p>
                             </div>
                           </div>
                         </div>
                       ))
                     ) : (
-                      <div className="flex flex-col items-center justify-center h-40 text-muted-foreground opacity-50">
-                        <MessageSquare className="w-10 h-10 mb-2" />
-                        <p className="text-sm">No history found</p>
+                      <div className="py-20 flex flex-col items-center justify-center text-center opacity-40">
+                        <Database className="w-12 h-12 text-slate-300 mb-4" />
+                        <p className="text-sm font-bold uppercase tracking-widest">No Narrative History</p>
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Right Side: Quick Actions */}
-                <div className="md:col-span-2 p-4 md:p-6 bg-background space-y-6">
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Quick Update</h3>
+                {/* Command Center */}
+                <div className="w-full md:w-[380px] bg-slate-50/50 dark:bg-slate-900/50 border-t md:border-t-0 md:border-l border-slate-200 dark:border-slate-800 p-8 md:p-10 flex flex-col gap-8 overflow-y-auto">
+                  <div className="space-y-6">
+                    <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Command Center</h3>
 
                     <div className="space-y-2">
-                      <Label>Change Status</Label>
+                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Evolve State</Label>
                       <Select
                         value={followupLead.status}
                         onValueChange={(v) => {
@@ -1957,60 +1941,71 @@ function LeadsCenterView({
                           setFollowupLead(updated);
                         }}
                       >
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
+                        <SelectTrigger className="h-12 rounded-2xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm font-bold">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-2xl border-slate-200 dark:border-slate-800">
                           {companyActivityTypes.map((at) => (
-                            <SelectItem key={at.id} value={at.name}>{at.name}</SelectItem>
+                            <SelectItem key={at.id} value={at.name} className="rounded-xl my-0.5">{at.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                       {followupLead.status === "Booked" && (
-                        <p className="text-[10px] text-emerald-600 italic font-medium">Will be marked as Converted</p>
+                        <div className="px-3 py-2 bg-emerald-500/10 rounded-xl flex items-center gap-2 mt-2">
+                          <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                          <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Auto-Converting Category</p>
+                        </div>
                       )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Add Remark</Label>
+                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">New Interaction Log</Label>
                       <Textarea
-                        placeholder="Add new followup remark..."
-                        className="min-h-[120px] resize-none"
+                        placeholder="Type session insights here..."
+                        className="min-h-[160px] rounded-3xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm p-6 resize-none font-medium leading-relaxed"
                         value={newRemark}
                         onChange={(e) => setNewRemark(e.target.value)}
                       />
                     </div>
                   </div>
 
-                  <div className="pt-4 space-y-3">
+                  <div className="mt-auto space-y-4 pt-10 border-t border-slate-200 dark:border-slate-800">
                     <Button
-                      className="w-full gap-2 shadow-lg shadow-primary/20"
                       onClick={handleFollowupSave}
+                      className="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black shadow-xl shadow-blue-500/25 active:scale-[0.98] transition-all"
                     >
-                      <Plus className="w-4 h-4" />
-                      Save Followup
+                      Sync Interaction
                     </Button>
                     <Button
                       variant="ghost"
-                      className="w-full text-muted-foreground hover:text-foreground"
                       onClick={() => setFollowupLead(null)}
+                      className="w-full h-14 rounded-2xl font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-slate-500"
                     >
-                      Cancel
+                      Dismiss
                     </Button>
                   </div>
 
-                  <div className="mt-8 p-4 bg-muted/30 rounded-xl border border-border text-xs space-y-2">
-                    <p className="font-semibold text-muted-foreground uppercase tracking-widest text-[9px]">Lead Info Summary</p>
-                    <div className="grid grid-cols-2 gap-x-2 gap-y-1">
-                      <span className="text-muted-foreground">Config:</span>
-                      <span className="font-medium">{followupLead.flatConfig || "N/A"}</span>
-                      <span className="text-muted-foreground">Location:</span>
-                      <span className="font-bold truncate" title={followupLead.location}>{followupLead.location || "N/A"}</span>
-                      <span className="text-muted-foreground">Source:</span>
-                      <span className="font-medium">{followupLead.source || "N/A"}</span>
+                  <div className="mt-4 p-5 bg-gradient-to-br from-slate-900 to-slate-800 rounded-[1.5rem] shadow-xl text-white space-y-3 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 blur-2xl rounded-full" />
+                    <p className="font-black uppercase tracking-[0.2em] text-[9px] text-blue-400 mb-4 opacity-80 underline underline-offset-4">Lead Intelligence Summary</p>
+                    <div className="space-y-3">
+                      <div className="flex flex-col">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Configuration</span>
+                        <span className="text-xs font-bold">{followupLead.flatConfig || "Not Defined"}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Target Area</span>
+                        <span className="text-xs font-bold truncate">{followupLead.location || "Not Defined"}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Market Source</span>
+                        <span className="text-xs font-bold">{followupLead.source || "Organic Discovery"}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </>
+            </div>
           )}
         </DialogContent>
       </Dialog>
@@ -2019,10 +2014,7 @@ function LeadsCenterView({
 }
 
 // ============================================
-// LEADS ASSIGN VIEW
-// ============================================
-// ============================================
-// LEADS ASSIGN VIEW
+// ASSIGNMENT VIEW
 // ============================================
 function LeadsAssignView({ companyId }: { companyId: number }) {
   const { leads, users, updateLead } = useData()
@@ -2033,71 +2025,78 @@ function LeadsAssignView({ companyId }: { companyId: number }) {
 
   const companyLeads = leads.filter(l => l.companyId === companyId).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
   const companyUsers = users.filter(u => u.companyId === companyId)
-  const unassignedLeads = companyLeads.filter(l => !l.assignedAgent)
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Leads Assign</h1>
-        <p className="text-muted-foreground">Assign leads to your team members</p>
+    <div className="space-y-10">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight uppercase">Lead Assignment</h1>
+          <p className="text-slate-500 dark:text-slate-400 font-medium mt-2">Distribute your pipeline intelligence among the elite team</p>
+        </div>
+        <div className="flex items-center gap-3 px-6 py-3 bg-blue-600/5 dark:bg-blue-500/5 rounded-2xl border border-blue-500/10">
+          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">{companyLeads.length} Total Pipeline Entries</span>
+        </div>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          {companyLeads.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <UserX className="w-12 h-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No leads to assign</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Lead Name</TableHead>
-                    <TableHead>Mobile</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Assigned To</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {companyLeads.map((lead) => (
-                    <TableRow key={lead.id}>
-                      <TableCell className="font-medium">{lead.fullName}</TableCell>
-                      <TableCell>{lead.mobile}</TableCell>
-                      <TableCell><Badge variant="outline">{lead.status}</Badge></TableCell>
-                      <TableCell>{lead.assignedAgent || <span className="text-muted-foreground">Unassigned</span>}</TableCell>
-                      <TableCell className="text-right">
-                        <Select value={lead.assignedAgent} onValueChange={(v) => handleAssign(lead.id, v)}>
-                          <SelectTrigger className="w-40">
-                            <SelectValue placeholder="Assign to..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {companyUsers.filter(u => u.status === "Active").map((u) => (
-                              <SelectItem key={u.id} value={u.name}>{u.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {unassignedLeads.length > 0 && (
-        <p className="text-sm text-muted-foreground">{unassignedLeads.length} lead(s) unassigned</p>
-      )}
+      <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-slate-100 dark:border-slate-800 hover:bg-transparent px-6">
+              <TableHead className="py-6 px-10 text-[11px] font-black uppercase tracking-widest text-slate-400">Prospect Identity</TableHead>
+              <TableHead className="py-6 text-[11px] font-black uppercase tracking-widest text-slate-400">Contact</TableHead>
+              <TableHead className="py-6 text-[11px] font-black uppercase tracking-widest text-slate-400">Phase</TableHead>
+              <TableHead className="py-6 text-[11px] font-black uppercase tracking-widest text-slate-400">Assigned Asset</TableHead>
+              <TableHead className="py-6 text-right px-10 text-[11px] font-black uppercase tracking-widest text-slate-400">Assignment Path</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {companyLeads.map((lead) => (
+              <TableRow key={lead.id} className="group border-slate-100 dark:border-slate-800 hover:bg-blue-50/30 dark:hover:bg-blue-500/5 transition-all px-6">
+                <TableCell className="py-5 px-10">
+                  <span className="text-base font-black text-slate-900 dark:text-white tracking-tight">{lead.fullName}</span>
+                </TableCell>
+                <TableCell className="py-5">
+                  <span className="text-sm font-semibold text-slate-500">{lead.mobile}</span>
+                </TableCell>
+                <TableCell className="py-5">
+                  <Badge variant="outline" className="rounded-full px-3 py-0.5 text-[10px] font-black uppercase tracking-widest border-slate-200 dark:border-slate-800">{lead.status}</Badge>
+                </TableCell>
+                <TableCell className="py-5">
+                  {lead.assignedAgent ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-blue-600/10 flex items-center justify-center text-[10px] font-black text-blue-600 border border-blue-500/20">
+                        {lead.assignedAgent[0]}
+                      </div>
+                      <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{lead.assignedAgent}</span>
+                    </div>
+                  ) : (
+                    <span className="text-xs font-black uppercase tracking-widest text-slate-300 dark:text-slate-600 italic">Unassigned Velocity</span>
+                  )}
+                </TableCell>
+                <TableCell className="py-5 text-right px-10">
+                  <Select value={lead.assignedAgent} onValueChange={(v) => handleAssign(lead.id, v)}>
+                    <SelectTrigger className="w-48 h-12 rounded-2xl bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 shadow-sm focus:ring-blue-500/20 font-bold transition-all">
+                      <SelectValue placeholder="Dispatch to..." />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl border-slate-200 dark:border-slate-800 shadow-2xl">
+                      {companyUsers.filter(u => u.status === "Active").map((u) => (
+                        <SelectItem key={u.id} value={u.name} className="rounded-xl my-1 font-medium">{u.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   )
 }
 
 // ============================================
-// USER LIST VIEW
+// TEAM MANAGEMENT VIEW
 // ============================================
 function UserListView({ companyId }: { companyId: number }) {
   const { users, setUsers } = useData()
@@ -2148,120 +2147,133 @@ function UserListView({ companyId }: { companyId: number }) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">User List</h1>
-          <p className="text-muted-foreground">Manage your team members</p>
+          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight uppercase">Team Intelligence</h1>
+          <p className="text-slate-500 dark:text-slate-400 font-medium mt-2">Scale your operational capacity with elite personnel</p>
         </div>
         <Dialog open={addUserOpen} onOpenChange={setAddUserOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2"><Plus className="w-4 h-4" />Add User</Button>
+            <Button className="h-14 px-8 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black shadow-xl shadow-slate-900/10 dark:shadow-none hover:scale-[1.02] active:scale-95 transition-all">
+              <Plus className="w-5 h-5 mr-3" />
+              Recruit Member
+            </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md max-h-[95vh] w-[calc(100%-2rem)] md:w-full overflow-y-auto p-4 md:p-6">
-            <DialogHeader><DialogTitle>Add New User</DialogTitle></DialogHeader>
-            <div className="space-y-4 py-4">
+          <DialogContent className="max-w-md bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border-white/20 dark:border-slate-800 rounded-[2.5rem] shadow-2xl p-8">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-black tracking-tight">Recruit New Member</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-5 py-6">
               <div className="space-y-2">
-                <Label>Name</Label>
-                <Input value={newUserName} onChange={(e) => setNewUserName(e.target.value)} placeholder="Enter name" />
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Full Name</Label>
+                <Input value={newUserName} onChange={(e) => setNewUserName(e.target.value)} placeholder="Agent Identity" className="h-12 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-transparent focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium" />
               </div>
               <div className="space-y-2">
-                <Label>Email</Label>
-                <Input value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} placeholder="Enter email" type="email" />
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Email Protocol</Label>
+                <Input value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} placeholder="agent@growfast.com" type="email" className="h-12 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-transparent focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium" />
               </div>
               <div className="space-y-2">
-                <Label>Role</Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Operational Role</Label>
                 <Select value={newUserRole} onValueChange={setNewUserRole}>
-                  <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Sales Agent">Sales Agent</SelectItem>
-                    <SelectItem value="Team Lead">Team Lead</SelectItem>
-                    <SelectItem value="Manager">Manager</SelectItem>
+                  <SelectTrigger className="h-12 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-transparent focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium">
+                    <SelectValue placeholder="Select Rank" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl border-slate-200 dark:border-slate-800 shadow-xl">
+                    <SelectItem value="Sales Agent" className="rounded-xl my-1">Field Agent</SelectItem>
+                    <SelectItem value="Team Lead" className="rounded-xl my-1">Operational Lead</SelectItem>
+                    <SelectItem value="Manager" className="rounded-xl my-1">Strategic Manager</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setAddUserOpen(false)}>Cancel</Button>
-              <Button onClick={handleAddUser} disabled={!newUserName || !newUserEmail || !newUserRole}>Add User</Button>
+            <DialogFooter className="gap-3">
+              <Button variant="ghost" onClick={() => setAddUserOpen(false)} className="h-12 px-6 rounded-xl font-bold">Abort</Button>
+              <Button onClick={handleAddUser} disabled={!newUserName || !newUserEmail || !newUserRole} className="h-12 px-8 rounded-xl bg-blue-600 text-white font-black shadow-lg shadow-blue-500/20">Authorize Member</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {companyUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.role}</TableCell>
-                    <TableCell>
-                      <Badge variant={user.status === "Active" ? "default" : "destructive"} className={cn(user.status === "Active" ? "bg-emerald-500/10 text-emerald-600" : "")}>
-                        {user.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => setEditUser(user)}><Pencil className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleToggleStatus(user.id)}>
-                          <LogIn className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(user.id)} className="text-destructive hover:text-destructive">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {companyUsers.map((member) => (
+          <div key={member.id} className="group bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-lg hover:shadow-2xl transition-all duration-300 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-600/5 blur-3xl rounded-full translate-x-12 -translate-y-12 group-hover:scale-150 transition-transform duration-500" />
+
+            <div className="flex items-start justify-between mb-6 relative z-10">
+              <Avatar className="w-16 h-16 border-2 border-white dark:border-slate-800 shadow-xl ring-4 ring-blue-500/5">
+                <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-600 text-white text-xl font-black">
+                  {member.name.split(" ").map(n => n[0]).join("")}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex gap-1">
+                <Button variant="ghost" size="icon" onClick={() => setEditUser(member)} className="w-9 h-9 rounded-xl hover:bg-white dark:hover:bg-slate-800 shadow-sm border border-transparent hover:border-slate-200 transition-all">
+                  <Pencil className="w-4 h-4 text-slate-400 group-hover:text-blue-500" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => handleDeleteUser(member.id)} className="w-9 h-9 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 text-slate-400 hover:text-rose-500 transition-all">
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-1 relative z-10">
+              <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">{member.name}</h3>
+              <p className="text-sm font-semibold text-slate-500">{member.email}</p>
+            </div>
+
+            <div className="mt-6 flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-6 relative z-10">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Authorization</p>
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{member.role}</span>
+              </div>
+              <button
+                onClick={() => handleToggleStatus(member.id)}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                  member.status === "Active"
+                    ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white"
+                    : "bg-rose-500/10 text-rose-600 border border-rose-500/20 hover:bg-rose-500 hover:text-white"
+                )}
+              >
+                {member.status}
+              </button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        ))}
+      </div>
 
       {/* Edit User Modal */}
       <Dialog open={!!editUser} onOpenChange={(open) => !open && setEditUser(null)}>
-        <DialogContent className="max-w-md max-h-[95vh] w-[calc(100%-2rem)] md:w-full overflow-y-auto p-4 md:p-6">
-          <DialogHeader><DialogTitle>Edit User</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-md bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border-white/20 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-2xl">
+          <DialogHeader><DialogTitle className="text-2xl font-black tracking-tight">Modify Expert Profile</DialogTitle></DialogHeader>
           {editUser && (
-            <div className="space-y-4 py-4">
+            <div className="space-y-5 py-6">
               <div className="space-y-2">
-                <Label>Name</Label>
-                <Input value={editUser.name} onChange={(e) => setEditUser({ ...editUser, name: e.target.value })} />
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Identify</Label>
+                <Input value={editUser.name} onChange={(e) => setEditUser({ ...editUser, name: e.target.value })} className="h-12 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-transparent font-medium" />
               </div>
               <div className="space-y-2">
-                <Label>Email</Label>
-                <Input value={editUser.email} onChange={(e) => setEditUser({ ...editUser, email: e.target.value })} />
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Sync Protocol</Label>
+                <Input value={editUser.email} onChange={(e) => setEditUser({ ...editUser, email: e.target.value })} className="h-12 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-transparent font-medium" />
               </div>
               <div className="space-y-2">
-                <Label>Role</Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Privilege Level</Label>
                 <Select value={editUser.role} onValueChange={(v) => setEditUser({ ...editUser, role: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Sales Agent">Sales Agent</SelectItem>
-                    <SelectItem value="Team Lead">Team Lead</SelectItem>
-                    <SelectItem value="Manager">Manager</SelectItem>
+                  <SelectTrigger className="h-12 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-transparent font-medium">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl">
+                    <SelectItem value="Sales Agent" className="rounded-xl">Field Agent</SelectItem>
+                    <SelectItem value="Team Lead" className="rounded-xl">Operational Lead</SelectItem>
+                    <SelectItem value="Manager" className="rounded-xl">Strategic Manager</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditUser(null)}>Cancel</Button>
-            <Button onClick={handleEditSave}>Save Changes</Button>
+          <DialogFooter className="gap-3">
+            <Button variant="ghost" onClick={() => setEditUser(null)} className="h-12 px-6 rounded-xl font-bold">Discard</Button>
+            <Button onClick={handleEditSave} className="h-12 px-8 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black">Sync Profiler</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -2494,63 +2506,74 @@ function SettingsView({ companyId }: { companyId: number }) {
 }
 
 // ============================================
-// CATEGORYS VIEW (WITH STATE)
+// WORKFLOW CONFIGURATION VIEW
 // ============================================
-function CategorysView({ companyId }: { companyId: number }) {
+function CategoriesView({ companyId }: { companyId: number }) {
   const { categories, setCategories, sources, setSources, teams, setTeams, activityTypes, setActivityTypes } = useData()
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">Settings</h1>
+    <div className="space-y-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight uppercase">Workflow Architecture</h1>
+          <p className="text-slate-500 dark:text-slate-400 font-medium mt-2">Configure the core logic of your pipeline intelligence</p>
+        </div>
+      </div>
 
-      <Tabs defaultValue="activity-types" className="w-full">
-        <TabsList className="bg-muted">
-          <TabsTrigger value="activity-types">Activity Types</TabsTrigger>
-          <TabsTrigger value="source">Lead Source</TabsTrigger>
-          <TabsTrigger value="team">Team</TabsTrigger>
-          <TabsTrigger value="category">Category</TabsTrigger>
-        </TabsList>
+      <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl rounded-[2.5rem] border border-slate-200 dark:border-slate-800 p-2 shadow-2xl overflow-hidden">
+        <Tabs defaultValue="activity-types" className="w-full">
+          <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+            <TabsList className="bg-slate-100/50 dark:bg-slate-800/50 p-1.5 rounded-2xl h-auto gap-1">
+              <TabsTrigger value="activity-types" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-lg font-bold text-xs uppercase tracking-widest transition-all">Phase States</TabsTrigger>
+              <TabsTrigger value="source" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-lg font-bold text-xs uppercase tracking-widest transition-all">Intel Sources</TabsTrigger>
+              <TabsTrigger value="team" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-lg font-bold text-xs uppercase tracking-widest transition-all">Team Divisions</TabsTrigger>
+              <TabsTrigger value="category" className="rounded-xl px-6 py-2.5 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:shadow-lg font-bold text-xs uppercase tracking-widest transition-all">Segments</TabsTrigger>
+            </TabsList>
+          </div>
 
-        <TabsContent value="activity-types" className="mt-4">
-          <CategoryTable
-            companyId={companyId}
-            data={activityTypes}
-            setData={setActivityTypes}
-            title="Activity Type"
-            description="These statuses control the Dashboard tiles. Adding, editing or deleting items here will update the Dashboard cards."
-          />
-        </TabsContent>
+          <div className="p-8">
+            <TabsContent value="activity-types" className="mt-0 focus-visible:ring-0">
+              <CategoryTable
+                companyId={companyId}
+                data={activityTypes}
+                setData={setActivityTypes}
+                title="Phase State"
+                description="These statuses control the primary dashboard intelligence tiles and lead pipeline progression."
+              />
+            </TabsContent>
 
-        <TabsContent value="source" className="mt-4">
-          <CategoryTable
-            companyId={companyId}
-            data={sources}
-            setData={setSources}
-            title="Lead Source"
-            description="Lead sources appear in the Add Lead dropdown and Dashboard statistics."
-          />
-        </TabsContent>
+            <TabsContent value="source" className="mt-0 focus-visible:ring-0">
+              <CategoryTable
+                companyId={companyId}
+                data={sources}
+                setData={setSources}
+                title="Intel Source"
+                description="Identify the origin of your leads to optimize marketing acquisition spend."
+              />
+            </TabsContent>
 
-        <TabsContent value="team" className="mt-4">
-          <CategoryTable
-            companyId={companyId}
-            data={teams}
-            setData={setTeams}
-            title="Team"
-            description="Teams are used for organizing agents and lead assignments."
-          />
-        </TabsContent>
+            <TabsContent value="team" className="mt-0 focus-visible:ring-0">
+              <CategoryTable
+                companyId={companyId}
+                data={teams}
+                setData={setTeams}
+                title="Team Division"
+                description="Organize your workforce into specialized units for enhanced efficiency."
+              />
+            </TabsContent>
 
-        <TabsContent value="category" className="mt-4">
-          <CategoryTable
-            companyId={companyId}
-            data={categories}
-            setData={setCategories}
-            title="Category"
-            description="General lead segments for categorizing your leads."
-          />
-        </TabsContent>
-      </Tabs>
+            <TabsContent value="category" className="mt-0 focus-visible:ring-0">
+              <CategoryTable
+                companyId={companyId}
+                data={categories}
+                setData={setCategories}
+                title="User Segment"
+                description="General lead classifications used for high-level pipeline reporting."
+              />
+            </TabsContent>
+          </div>
+        </Tabs>
+      </div>
     </div>
   )
 }
@@ -2570,7 +2593,7 @@ function CategoryTable({
 }) {
   const [addOpen, setAddOpen] = useState(false)
   const [newItemName, setNewItemName] = useState("")
-  const [newItemColor, setNewItemColor] = useState("#000000")
+  const [newItemColor, setNewItemColor] = useState("#3b82f6")
   const [editItem, setEditItem] = useState<{ id: number; companyId: number; name: string; color: string } | null>(null)
 
   const companyData = data.filter(d => d.companyId === companyId)
@@ -2585,7 +2608,6 @@ function CategoryTable({
       }
       setData([...data, newItem])
       setNewItemName("")
-      setNewItemColor("#000000")
       setAddOpen(false)
     }
   }
@@ -2607,94 +2629,98 @@ function CategoryTable({
   }
 
   return (
-    <div className="bg-card rounded-xl border border-border">
-      <div className="p-4 border-b border-border flex items-center justify-between">
-        <div>
-          <h3 className="font-semibold text-card-foreground">{title} List</h3>
-          {description && <p className="text-sm text-muted-foreground mt-1">{description}</p>}
+    <div className="space-y-8">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="max-w-xl">
+          <h3 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{title} Configuration</h3>
+          {description && <p className="text-sm font-medium text-slate-500 mt-2">{description}</p>}
         </div>
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="gap-1"><Plus className="w-4 h-4" />Add</Button>
+            <Button className="h-12 px-6 rounded-xl bg-blue-600 text-white font-black shadow-lg shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all">
+              <Plus className="w-5 h-5 mr-2" />
+              Forging Logic
+            </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md max-h-[95vh] w-[calc(100%-2rem)] md:w-full overflow-y-auto p-4 md:p-6">
-            <DialogHeader><DialogTitle>Add New {title}</DialogTitle></DialogHeader>
-            <div className="space-y-4 py-4">
+          <DialogContent className="max-w-md bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border-white/20 dark:border-slate-800 rounded-[2.5rem] shadow-2xl p-8">
+            <DialogHeader><DialogTitle className="text-2xl font-black tracking-tight">Create New {title}</DialogTitle></DialogHeader>
+            <div className="space-y-5 py-6">
               <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input id="name" placeholder={`Enter ${title.toLowerCase()} name`} value={newItemName} onChange={(e) => setNewItemName(e.target.value)} />
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Label Designation</Label>
+                <Input placeholder={`Identify this ${title.toLowerCase()}`} value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="h-12 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-transparent font-medium" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="color">Color (Hex)</Label>
-                <div className="flex gap-2">
-                  <Input id="color" placeholder="#000000" value={newItemColor} onChange={(e) => setNewItemColor(e.target.value)} className="flex-1" />
-                  <input type="color" value={newItemColor} onChange={(e) => setNewItemColor(e.target.value)} className="w-10 h-10 rounded border border-border cursor-pointer" />
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Visual Index (Color)</Label>
+                <div className="flex gap-2 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-transparent shadow-inner">
+                  {["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#6366f1", "#ec4899", "#14b8a6"].map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => setNewItemColor(color)}
+                      className={cn(
+                        "w-8 h-8 rounded-full transition-all shadow-md active:scale-90",
+                        newItemColor === color ? "ring-4 ring-offset-2 ring-blue-500/50 scale-110" : "scale-100"
+                      )}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                  <Input type="color" value={newItemColor} onChange={(e) => setNewItemColor(e.target.value)} className="w-10 h-8 p-0 border-none bg-transparent cursor-pointer ml-auto" />
                 </div>
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
-              <Button onClick={handleAdd} disabled={!newItemName}>Save</Button>
+            <DialogFooter className="gap-3">
+              <Button variant="ghost" onClick={() => setAddOpen(false)} className="h-12 px-6 rounded-xl font-bold">Abort</Button>
+              <Button onClick={handleAdd} disabled={!newItemName} className="h-12 px-8 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black">Authorize</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-16">SN</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead className="w-24">Color</TableHead>
-              <TableHead className="w-32 text-right">Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {companyData.map((item, index) => (
-              <TableRow key={item.id}>
-                <TableCell className="font-medium">{index + 1}</TableCell>
-                <TableCell>{item.name}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full border border-border" style={{ backgroundColor: item.color }} />
-                    <span className="text-xs text-muted-foreground">{item.color}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => setEditItem(item)}><Pencil className="w-4 h-4" /></Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)} className="text-destructive hover:text-destructive"><Trash2 className="w-4 h-4" /></Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {companyData.map((item, index) => (
+          <div key={item.id} className="group bg-white dark:bg-slate-800/50 rounded-3xl p-6 border border-slate-100 dark:border-slate-800/80 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:rotate-12 transition-transform" style={{ backgroundColor: item.color }}>
+                <span className="text-white text-[10px] font-black uppercase tracking-tighter opacity-80">{index + 1}</span>
+              </div>
+              <div>
+                <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">{item.name}</h4>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{item.color}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+              <Button variant="ghost" size="icon" className="w-9 h-9 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-300 hover:text-blue-500" onClick={() => setEditItem(item)}>
+                <Pencil className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="w-9 h-9 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 text-slate-300 hover:text-rose-500" onClick={() => handleDelete(item.id)}>
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Edit Modal */}
       <Dialog open={!!editItem} onOpenChange={(open) => !open && setEditItem(null)}>
-        <DialogContent className="max-w-md max-h-[95vh] w-[calc(100%-2rem)] md:w-full overflow-y-auto p-4 md:p-6">
-          <DialogHeader><DialogTitle>Edit {title}</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-md bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border-white/20 dark:border-slate-800 rounded-[2.5rem] shadow-2xl p-8">
+          <DialogHeader><DialogTitle className="text-2xl font-black tracking-tight">Modify {title}</DialogTitle></DialogHeader>
           {editItem && (
-            <div className="space-y-4 py-4">
+            <div className="space-y-5 py-6">
               <div className="space-y-2">
-                <Label>Name</Label>
-                <Input value={editItem.name} onChange={(e) => setEditItem({ ...editItem, name: e.target.value })} />
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Update Label</Label>
+                <Input value={editItem.name} onChange={(e) => setEditItem({ ...editItem, name: e.target.value })} className="h-12 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-transparent font-medium" />
               </div>
               <div className="space-y-2">
-                <Label>Color</Label>
-                <div className="flex gap-2">
-                  <Input value={editItem.color} onChange={(e) => setEditItem({ ...editItem, color: e.target.value })} className="flex-1" />
-                  <input type="color" value={editItem.color} onChange={(e) => setEditItem({ ...editItem, color: e.target.value })} className="w-10 h-10 rounded border border-border cursor-pointer" />
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Spectral Index (Color)</Label>
+                <div className="flex gap-2 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-2xl">
+                  <Input value={editItem.color} onChange={(e) => setEditItem({ ...editItem, color: e.target.value })} className="h-10 border-transparent bg-transparent font-bold flex-1" />
+                  <input type="color" value={editItem.color} onChange={(e) => setEditItem({ ...editItem, color: e.target.value })} className="w-10 h-10 rounded-xl border-none cursor-pointer" />
                 </div>
               </div>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditItem(null)}>Cancel</Button>
-            <Button onClick={handleEditSave}>Save Changes</Button>
+          <DialogFooter className="gap-3">
+            <Button variant="ghost" onClick={() => setEditItem(null)} className="h-12 px-6 rounded-xl font-bold">Discard</Button>
+            <Button onClick={handleEditSave} className="h-12 px-8 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black">Sync Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -2722,7 +2748,7 @@ function PlaceholderView({ title }: { title: string }) {
 function HowToUseView() {
   const steps = [
     { title: "Add New Leads", description: "Click on 'Add New Leads' in the sidebar to open the lead form and enter prospect information." },
-    { title: "Manage Categories", description: "Go to 'Categorys' to create and customize lead categories, sources, and team assignments." },
+    { title: "Manage Categories", description: "Go to 'Categories' to create and customize lead categories, sources, and team assignments." },
     { title: "Track Lead Status", description: "Use the Dashboard to monitor lead activity types and conversion metrics at a glance." },
     { title: "Assign Leads", description: "Navigate to 'Leads Assign' to distribute leads among your sales team members." },
   ]
