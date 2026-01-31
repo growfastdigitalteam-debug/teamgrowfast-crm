@@ -185,23 +185,27 @@ export function SupabaseDataProvider({ children }: { children: ReactNode }) {
 
             // 5. Mock Companies/Users for UI compatibility
             // 5. Fetch Companies logic
+            // 5. Fetch Companies logic
             if (publicUser.role === 'superadmin' || user.email === 'admin@admin.com') {
-                const { data: dbCompanies } = await supabase
-                    .from('users')
-                    .select('*')
-                    .eq('role', 'admin') // Fetch all company admins
+                try {
+                    const response = await fetch('/api/get-companies')
+                    const result = await response.json()
+                    const dbCompanies = result.companies
 
-                if (dbCompanies) {
-                    const mappedCompanies: Company[] = dbCompanies.map((u, index) => ({
-                        id: u.id.length > 8 ? index + 1 : Number(u.id), // Handle UUID vs Number
-                        name: u.full_name || "Unknown Company",
-                        adminEmail: u.email || "",
-                        password: "Encrypted", // Cannot decrypt Supabase passwords
-                        status: "Active",
-                        createdAt: u.created_at ? u.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
-                        tenantId: u.tenant_id
-                    }))
-                    setCompanies(mappedCompanies)
+                    if (dbCompanies) {
+                        const mappedCompanies: Company[] = dbCompanies.map((u: any, index: number) => ({
+                            id: u.id.length > 8 ? index + 1 : Number(u.id),
+                            name: u.full_name || "Unknown Company",
+                            adminEmail: u.email || "",
+                            password: "Encrypted",
+                            status: "Active",
+                            createdAt: u.created_at ? u.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+                            tenantId: u.tenant_id
+                        }))
+                        setCompanies(mappedCompanies)
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch companies list", err)
                 }
             } else {
                 // For normal user, set their own company
@@ -216,7 +220,7 @@ export function SupabaseDataProvider({ children }: { children: ReactNode }) {
                 }])
             }
 
-            // Mock Users list (local only for now as requested leads focus)
+            // Mock Users list
             setUsers([{
                 id: 1,
                 companyId: 1,
@@ -241,21 +245,36 @@ export function SupabaseDataProvider({ children }: { children: ReactNode }) {
     const addLead = async (leadData: Omit<Lead, "id" | "createdAt" | "updatedAt">) => {
         try {
             const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return false
+            if (!user) {
+                alert("Please login first")
+                return false
+            }
 
-            const { data: publicUser } = await supabase
-                .from('users')
-                .select('tenant_id')
-                .eq('id', user.id)
-                .single()
+            // Try to get tenant_id from metadata first (faster/reliable)
+            let tenantId = user.user_metadata?.tenant_id
 
-            if (!publicUser) return false
+            // If not found, check DB profile
+            if (!tenantId) {
+                const { data: publicUser } = await supabase
+                    .from('users')
+                    .select('tenant_id')
+                    .eq('id', user.id)
+                    .maybeSingle()
+
+                if (publicUser) tenantId = publicUser.tenant_id
+            }
+
+            if (!tenantId) {
+                alert("Error: Tenant ID is missing. Cannot save lead.")
+                console.error("Missing tenant_id for user", user.id)
+                return false
+            }
 
             // Insert into Supabase
             const { data, error } = await supabase
                 .from('leads')
                 .insert({
-                    tenant_id: publicUser.tenant_id,
+                    tenant_id: tenantId,
                     name: leadData.fullName,
                     phone: leadData.mobile,
                     alternate_phone: leadData.whatsapp,
@@ -281,6 +300,7 @@ export function SupabaseDataProvider({ children }: { children: ReactNode }) {
 
         } catch (err: any) {
             console.error(err)
+            alert("Save Failed: " + err.message)
             toast.error("Save Failed: " + err.message)
             return false
         }
