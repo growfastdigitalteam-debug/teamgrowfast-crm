@@ -305,7 +305,7 @@ function CRMAppContent() {
           .from('users')
           .select('role, full_name, tenant_id')
           .eq('id', session.user.id)
-          .single()
+          .maybeSingle()
 
         if (profile) {
           setUser({
@@ -385,7 +385,7 @@ function LoginPage({ onLogin, companies }: { onLogin: (user: User) => void; comp
           .from('users')
           .select('role, full_name')
           .eq('id', data.user.id)
-          .single()
+          .maybeSingle()
 
         onLogin({
           username: data.user.email!,

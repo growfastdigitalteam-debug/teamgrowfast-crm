@@ -123,7 +123,7 @@ export function SupabaseDataProvider({ children }: { children: ReactNode }) {
                 .from('users')
                 .select('tenant_id, role')
                 .eq('id', user.id)
-                .single()
+                .maybeSingle()
 
             if (!publicUser) return
 
